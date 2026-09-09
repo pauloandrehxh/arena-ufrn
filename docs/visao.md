@@ -8,11 +8,10 @@
 
 **Versão:** 1.0  
 
----
 
 ## 1. Visão Geral do Sistema
+
 O sistema é uma aplicação web acadêmica desenvolvida para o contexto universitário com o propósito de gerenciar a infraestrutura, a disponibilidade e o uso da quadra de areia da instituição. Seu foco principal é automatizar o fluxo de agendamentos, permitir a consulta de horários em tempo real e operacionalizar o cancelamento de reservas, integrando regras de negócio automatizadas para evitar o monopólio da estrutura por determinados alunos ou cursos. O público-alvo é composto por Discentes, Docentes e Administradores/Gestores do espaço esportivo, provendo um ambiente integrado, transparente e equitativo para operações e consultas esportivas cotidianas no campus.
----
 
 ## 2. Escopo do Plano de Testes
 ### 2.1. Itens no Escopo (O que será testado)
@@ -54,14 +53,11 @@ O sistema é uma aplicação web acadêmica desenvolvida para o contexto univers
 - **Foco:** Validação de ponta a ponta (E2E) dos fluxos descritos nas User Stories (US01 a US09), com foco na validação de perfis de acesso (Administrador, Docente, Discente, Coordenador).
 - **Responsável:** Equipe de Teste e Clientes (Professora Sandra e Professor Taciano / POs).
 
----
 
 ## 5. Ambiente de Testes
 - **Hardware/Servidores:** Ambiente de homologação dedicado para testes da equipe e validação com os clientes.
 - **Banco de Dados:** Base de dados relacional isolada para testes, populada com dados sintéticos representativos do cenário acadêmico.
 - **Sistemas / APIs Externas:** Simulações e stubs para eventuais dependências externas.
-
----
 
 ## 6. Ferramentas Utilizadas
 | Categoria | Ferramenta Escolhida | Finalidade |
