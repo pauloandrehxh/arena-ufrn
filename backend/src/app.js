@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 
+import { createQuadraService } from './services/quadra.service.js';
+import { createQuadraController } from './controllers/quadra.controller.js';
+import { createQuadraRoutes } from './routes/quadra.routes.js';
+
 export function createApp(prisma) {
     const app = express();
 
@@ -19,109 +23,13 @@ export function createApp(prisma) {
         });
     });
 
-    app.get('/api/quadras', async (req, res) => {
-        try {
-            const quadras = await prisma.quadra.findMany();
+    const quadraService = createQuadraService(prisma);
 
-            res.json(quadras);
-        } catch (error) {
-            console.error('Erro ao buscar quadras:', error);
+    const quadraController = createQuadraController(quadraService);
 
-            res.status(500).json({
-                message: 'Erro ao buscas quadras.'
-            });
-        }
-    });
+    const quadraRoutes = createQuadraRoutes(quadraController);
 
-    app.get('/api/quadras/:id', async (req, res) => {
-        try {
-            const id = Number(req.params.id);
-
-            const quadra = await prisma.quadra.findUnique({
-                where: {
-                    id: id
-                }
-            });
-
-            if (!quadra) {
-                return res.status(404).json({
-                    message: 'Quadra não encontrada.'
-                });
-            }
-
-            res.json(quadra);
-        } catch (error) {
-            console.error('Erro ao buscar quadra:', error);
-
-            res.status(500).json({
-                message: 'Erro ao buscar a quadra.'
-            });
-        }
-    });
-
-    app.post('/api/quadras', async (req, res) => {
-        try {
-            const { name } = req.body;
-
-            const quadra = await prisma.quadra.create({
-                data: {
-                    name: name
-                }
-            });
-
-            res.status(201).json(quadra);
-        } catch (error) {
-            console.error('Erro ao criar quadra:', error);
-
-            res.status(500).json({
-                message: 'Erro ao criar quadra.'
-            });
-        }
-    });
-
-    app.put('/api/quadras/:id', async (req, res) => {
-        try {
-            const id = Number(req.params.id);
-            const { name } = req.body;
-
-            const quadra = await prisma.quadra.update({
-                where: {
-                    id: id
-                },
-                data: {
-                    name: name
-                }
-            });
-
-            res.json(quadra);
-        } catch (error) {
-            console.error('Erro ao atualizar quadra:', error);
-
-            res.status(500).json({
-                message: 'Erro ao atualizar quadra.'
-            });
-        }
-    });
-
-    app.delete('/api/quadras/:id', async (req, res) => {
-        try {
-            const id = Number(req.params.id);
-
-            await prisma.quadra.delete({
-                where: {
-                    id: id
-                }
-            });
-
-            res.status(204).send();
-        } catch (error) {
-            console.error('Erro ao deletar quadra:', error);
-
-            res.status(500).json({
-                message: 'Erro ao deletar quadra.'
-            });
-        }
-    });
+    app.use('/api/quadras', quadraRoutes);
 
     return app;
 }
