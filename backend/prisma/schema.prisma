@@ -17,3 +17,11 @@ model Quadra {
   name   String
   active Boolean @default(true)
 }
+
+model Usuario {
+  id           Int     @id @default(autoincrement())
+  name         String
+  email        String  @unique
+  registration String  @unique
+  active       Boolean @default(true)
+}
