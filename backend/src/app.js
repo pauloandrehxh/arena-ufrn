@@ -9,6 +9,10 @@ import { createUsuarioService } from './services/usuario.service.js';
 import { createUsuarioController } from './controllers/usuario.controller.js';
 import { createUsuarioRoutes } from './routes/usuario.routes.js';
 
+import { createReservaService } from './services/reserva.service.js';
+import { createReservaController } from './controllers/reserva.controller.js';
+import { createReservaRoutes } from './routes/reserva.routes.js';
+
 export function createApp(prisma) {
     const app = express();
 
@@ -45,6 +49,15 @@ export function createApp(prisma) {
     const usuarioRoutes = createUsuarioRoutes(usuarioController);
 
     app.use('/api/usuarios', usuarioRoutes);
+
+    // Reservas
+    const reservaService = createReservaService(prisma);
+
+    const reservaController = createReservaController(reservaService);
+
+    const reservaRoutes = createReservaRoutes(reservaController);
+
+    app.use('/api/reservas', reservaRoutes);
 
     return app;
 }
