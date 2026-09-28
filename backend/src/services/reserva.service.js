@@ -18,8 +18,24 @@ export function createReservaService(prisma) {
         dataAtual.setHours(0, 0, 0, 0);
 
         if (dataReserva < dataAtual) {
-            throw new Error('Não é possível criar uma reserva no passado');
+            throw new Error('Não é possível criar uma reserva no passado.');
         }
+    }
+
+    async function validarUsuario(usuarioId) {
+        const usuario = await prisma.usuario.findUnique({
+            where: { id: usuarioId },
+        });
+
+        if (!usuario) {
+            throw new Error('Usuário não encontrado.');
+        }
+
+        if (!usuario.active) {
+            throw new Error('Usuário inativo.');
+        }
+
+        return usuario;
     }
 
     async function validarQuadra(quadraId) {
