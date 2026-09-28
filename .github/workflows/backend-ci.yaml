@@ -41,7 +41,15 @@ jobs:
         working-directory: backend
         run: pnpm prisma generate
 
-      - name: Executar testes com cobertura
+      - name: Executar testes unitários
+        working-directory: backend
+        run: pnpm test:unit
+
+      - name: Executar testes de integração
+        working-directory: backend
+        run: pnpm test:integration
+
+      - name: Gerar cobertura
         working-directory: backend
         run: pnpm test:coverage
 

@@ -14,6 +14,18 @@
   <img src="https://skillicons.dev/icons?i=js,react,vite,tailwind,nodejs,express,prisma,sqlite,jest,git,github" alt="Tecnologias utilizadas">
 </p>
 
+## Navegação
+
+- [Sobre o projeto](#sobre-o-projeto)
+- [Executando o projeto](#executando-o-projeto)
+- [API](#api)
+- [Testes](#testes)
+- [Cobertura de testes](#cobertura-de-testes)
+- [Integração Contínua](#integração-contínua)
+- [Arquitetura](#arquitetura)
+- [Documentação](./docs/)
+- [Roadmap](#roadmap)
+
 ## Sobre o projeto
 
 O **Arena UFRN** é uma aplicação web desenvolvida para facilitar o gerenciamento e a reserva de quadras de areia da Universidade Federal do Rio Grande do Norte (UFRN).
@@ -31,36 +43,14 @@ O projeto está sendo desenvolvido como atividade acadêmica em dupla e tem como
 
 A proposta é permitir que usuários consultem quadras disponíveis e, futuramente, realizem reservas de horários através da plataforma.
 
-## Status do projeto
+## Documentação
 
-O projeto encontra-se **em desenvolvimento**.
+A documentação complementar do projeto está disponível na pasta [`docs`](./docs/).
 
-### Implementado
+Consulte os documentos para mais detalhes sobre visão do projeto, decisões de desenvolvimento, requisitos e demais artefatos produzidos ao longo do projeto.
 
-* [x] Estrutura inicial do projeto
-* [x] Frontend com React e Vite
-* [x] Estilização com Tailwind CSS
-* [x] Backend com Node.js e Express
-* [x] Comunicação entre frontend e backend
-* [x] Configuração de CORS
-* [x] Banco de dados SQLite
-* [x] Prisma ORM
-* [x] CRUD de quadras
-* [x] Arquitetura de rotas, controladores e serviços
-* [x] CRUD de usuários
-* [x] Testes automatizados do backend com Jest
-* [x] Testes de endpoints com Supertest
-
-### Próximas etapas
-
-* [ ] Sistema de reservas
-* [ ] Validação de conflito de horários
-* [ ] Autenticação de usuários
-* [ ] Controle de acesso
-* [ ] Área administrativa
-* [ ] Evolução da interface do frontend
-* [ ] Testes do frontend
-* [ ] Testes End-to-End
+- [Visão do Projeto](./docs/visao.md)
+- [Plano de Teste](./docs/plano_teste.md)
 
 ## 🛠️ Tecnologias
 
@@ -165,83 +155,7 @@ Cada camada possui uma responsabilidade específica:
 
 Essa organização facilita a manutenção, expansão e criação de testes para o sistema.
 
-## Estrutura do projeto
-
-```text
-arena-ufrn/
-│
-├── backend/
-│   ├── prisma/
-│   │   ├── migrations/
-│   │   └── schema.prisma
-│   │
-│   ├── src/
-│   │   ├── controllers/
-│   │   │   ├── quadra.controller.js
-│   │   │   └── usuario.controller.js
-│   │   │
-│   │   ├── routes/
-│   │   │   ├── quadra.routes.js
-│   │   │   └── usuario.routes.js
-│   │   │
-│   │   ├── services/
-│   │   │   ├── quadra.service.js
-│   │   │   └── usuario.service.js
-│   │   │
-│   │   ├── lib/
-│   │   │   └── prisma.js
-│   │   │
-│   │   └── app.js
-│   │
-│   ├── tests/
-│   │   ├── quadras.test.js
-│   │   └── usuarios.test.js
-│   │
-│   ├── server.js
-│   ├── jest.config.js
-│   └── package.json
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   └── package.json
-│
-├── docs/
-├── .gitignore
-└── README.md
-```
-
-## Banco de dados
-
-Atualmente, a aplicação utiliza **SQLite** em conjunto com o **Prisma ORM**.
-
-### Quadra
-
-Representa as quadras cadastradas no sistema.
-
-```text
-Quadra
-├── id
-├── name
-└── active
-```
-
-### Usuário
-
-Representa os usuários cadastrados na plataforma.
-
-```text
-Usuario
-├── id
-├── name
-├── email
-├── registration
-└── active
-```
-
-O modelo de reservas será adicionado nas próximas etapas do desenvolvimento e será responsável por relacionar usuários, quadras, datas e horários.
-
-## 🌐 API
+## API
 
 Por padrão, o backend é executado em:
 
@@ -303,7 +217,7 @@ Exemplo de resposta:
 }
 ```
 
-## 🚀 Executando o projeto
+## Executando o projeto
 
 ### Pré-requisitos
 
@@ -333,7 +247,7 @@ Entre na pasta:
 cd arena-ufrn
 ```
 
-## Backend
+### 2. Backend
 
 Entre no diretório:
 
@@ -377,7 +291,7 @@ O backend ficará disponível em:
 http://localhost:3000
 ```
 
-## Frontend
+### 3. Frontend
 
 Em outro terminal, entre no frontend:
 
@@ -411,9 +325,10 @@ Os testes utilizam mocks do Prisma para permitir que as funcionalidades sejam ve
 
 ### Executar todos os testes
 
-Dentro de `backend/`:
+Todos os comandos abaixo devem ser executados dentro de `backend/`:
 
 ```bash
+cd backend
 pnpm test
 ```
 
@@ -423,48 +338,104 @@ pnpm test
 pnpm test:watch
 ```
 
-### Gerar relatório de cobertura
+### Testes de Unidade
+
+Os testes unitários verificam funcionalidades isoladas da aplicação.
+
+No projeto, os services são testados diretamente e o Prisma é substituído por Mock Objects, evitando acesso ao banco de dados durante os testes.
+
+Os testes unitários cobrem as principais operações do CRUD:
+
+- inserção;
+- consulta;
+- atualização;
+- exclusão.
+
+Para executar:
+```bash
+pnpm test:unit
+```
+
+### Testes de Integração
+
+Os testes de integração verificam o funcionamento conjunto das diferentes camadas do backend.
+
+Diferentemente do teste unitário, que verifica uma funcionalidade de maneira isolada, o teste de integração exercita diversos componentes da aplicação através de requisições HTTP.
+
+Para executar:
+```bash
+pnpm test:integration
+```
+
+### Cobertura de Testes
+
+O Jest também é utilizado para calcular a cobertura do código.
+
+Para gerar o relatório:
 
 ```bash
 pnpm test:coverage
 ```
 
-Atualmente são testadas funcionalidades relacionadas a:
+São analisadas métricas como:
 
-* listagem de registros;
-* busca por ID;
-* criação;
-* atualização;
-* exclusão;
-* validação de IDs;
-* registros inexistentes;
-* dados obrigatórios;
-* conflitos como e-mail ou matrícula já cadastrados.
+- Statements;
+- Branches;
+- Functions;
+- Lines.
 
-## Fluxo de desenvolvimento
+O relatório LCOV é gerado em: `backend/coverage/lcov.info`
 
-O projeto utiliza Git e GitHub para organização das alterações.
+Esse arquivo também é utilizado pelo SonarQube para importar as informações de cobertura.
 
-As branches são organizadas de acordo com o tipo de mudança, por exemplo:
+As evidências das execuções estão disponíveis em:
 
-```text
-feature/crud-usuarios
-feature/reservas
-refactor/arquitetura-backend
-test/testes-backend
-docs/atualiza-readme
-```
+- [Testes unitários](./docs/evidencias/testes-unitarios.png)
+- [Testes de integração](./docs/evidencias/testes-integracao.png)
+- [Cobertura](./docs/evidencias/cobertura.png)
 
-Os commits seguem o padrão **Conventional Commits**, mantendo os prefixos padronizados e as descrições em português:
+### Experiência com os testes
 
-```text
-feat: implementa CRUD de usuários
-fix: corrige validação de usuário
-refactor: reorganiza arquitetura do backend
-test: adiciona testes do CRUD de usuários
-docs: atualiza documentação do projeto
-chore: atualiza dependências do backend
-```
+A implementação dos testes ajudou a compreender melhor a importância da separação de responsabilidades no backend.
+
+Nos testes unitários, o uso de Mock Objects tornou possível testar os services sem depender do banco de dados real.
+
+Já nos testes de integração, foi possível verificar a comunicação entre Express, rotas, controllers e services através de requisições HTTP simuladas com Supertest.
+
+Essa separação tornou mais claro o papel de cada tipo de teste e também aumentou a segurança durante alterações e refatorações do código.
+
+## Integração Contínua
+
+O projeto utiliza **GitHub Actions** para executar automaticamente verificações sempre que mudanças são enviadas ao repositório.
+
+O workflow realiza:
+
+1. configuração do ambiente;
+2. instalação das dependências;
+3. geração do Prisma Client;
+4. execução dos testes unitários;
+5. execução dos testes de integração;
+6. geração da cobertura;
+7. análise com SonarQube.
+
+O workflow pode ser consultado em:
+
+[GitHub Actions](./.github/workflows/)
+
+
+## Referências de estudo
+
+### CRUD e testes com Node.js
+
+- [Build a CRUD API with TypeScript, Express, MongoDB, Zod and Jest](https://www.youtube.com/watch?v=vDLE8hqzA8I)
+
+O tutorial apresenta a construção de uma API CRUD utilizando Express e demonstra a implementação de testes automatizados com Jest e Supertest, abordando operações de criação, consulta, atualização e exclusão.
+
+### Documentações utilizadas
+
+- [Jest](https://jestjs.io/)
+- [Supertest](https://github.com/ladjs/supertest)
+- [Prisma - Testing](https://www.prisma.io/docs/orm/prisma-client/testing)
 
 ## Roadmap
 
@@ -512,7 +483,3 @@ Projeto desenvolvido em dupla para fins acadêmicos.
 | ----------- | ---------------- | ------------------------------------------------------------ |
 | Paulo André | Desenvolvimento  | [@pauloandrehxh](https://github.com/pauloandrehxh)           |
 | Luis Felipe | Desenvolvimento  | [@Luisfelipelinhares](https://github.com/Luisfelipelinhares) |
-
-## Contexto acadêmico
-
-O Arena UFRN busca aplicar conceitos estudados durante a formação em Sistemas de Informação através do desenvolvimento de uma aplicação completa, envolvendo frontend, backend, banco de dados, testes, versionamento e organização de projeto de software.
