@@ -12,15 +12,39 @@ datasource db {
 }
 
 model Quadra {
-  id     Int     @id @default(autoincrement())
-  name   String
-  active Boolean @default(true)
+  id       Int       @id @default(autoincrement())
+  name     String
+  active   Boolean   @default(true)
+  reservas Reserva[]
 }
 
 model Usuario {
-  id           Int     @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   name         String
-  email        String  @unique
-  registration String  @unique
-  active       Boolean @default(true)
+  email        String    @unique
+  registration String    @unique
+  active       Boolean   @default(true)
+  reservas     Reserva[]
+}
+
+enum StatusReserva {
+  ATIVA
+  CANCELADA
+  CONCLUIDA
+}
+
+model Reserva {
+  id        Int           @id @default(autoincrement())
+  date      DateTime
+  startTime String
+  endTime   String
+  status    StatusReserva @default(ATIVA)
+
+  usuarioId Int
+  quadraId  Int
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  quadra  Quadra  @relation(fields: [quadraId], references: [id])
+
+  createdAt DateTime @default(now())
 }

@@ -1,0 +1,13 @@
+-- CreateTable
+CREATE TABLE "Reserva" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "date" DATETIME NOT NULL,
+    "startTime" TEXT NOT NULL,
+    "endTime" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ATIVA',
+    "usuarioId" INTEGER NOT NULL,
+    "quadraId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Reserva_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "Usuario" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Reserva_quadraId_fkey" FOREIGN KEY ("quadraId") REFERENCES "Quadra" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
