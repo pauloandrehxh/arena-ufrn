@@ -39,7 +39,9 @@ jobs:
 
       - name: Gerar Prisma Client
         working-directory: backend
-        run: pnpm prisma generate
+        run: pnpm prisma generate --config prisma7.config.ts
+        env:
+          DATABASE_URL: file:./dev.db
 
       - name: Executar testes unitários
         working-directory: backend

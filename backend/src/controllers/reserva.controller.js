@@ -1,3 +1,5 @@
+import { ReservaValidationError, normalizarDataReserva } from '../lib/reserva.validation.js';
+
 export function createReservaController(reservaService) {
     async function listar(req, res) {
         try {
@@ -86,7 +88,7 @@ export function createReservaController(reservaService) {
             date,
             startTime,
             endTime,
-        } = req.body;
+        } = req.body ?? {};
 
         if (
             !usuarioId ||
@@ -101,18 +103,24 @@ export function createReservaController(reservaService) {
         }
 
         try {
+            if (typeof date !== 'string') {
+                throw new ReservaValidationError('Data deve ser válida no formato YYYY-MM-DD.');
+            }
+
             const reserva = await reservaService.criarReserva({
                 usuarioId,
                 quadraId,
-                date: new Date(date),
+                date: normalizarDataReserva(date),
                 startTime,
                 endTime,
             });
 
             return res.status(201).json(reserva);
         } catch (error) {
-            return res.status(400).json({
-                message: error.message,
+            const validacao = error instanceof ReservaValidationError;
+
+            return res.status(validacao ? 400 : 500).json({
+                message: validacao ? error.message : 'Erro ao criar reserva.',
             });
         }
     }
@@ -139,7 +147,7 @@ export function createReservaController(reservaService) {
             const dados = { ...req.body };
 
             if (dados.date) {
-                dados.date = new Date(dados.date);
+                dados.date = normalizarDataReserva(dados.date);
             }
 
             const reserva =
@@ -147,8 +155,10 @@ export function createReservaController(reservaService) {
 
             return res.status(200).json(reserva);
         } catch (error) {
-            return res.status(500).json({
-                message: 'Erro ao atualizar reserva.',
+            const validacao = error instanceof ReservaValidationError;
+
+            return res.status(validacao ? 400 : 500).json({
+                message: validacao ? error.message : 'Erro ao atualizar reserva.',
             });
         }
     }
