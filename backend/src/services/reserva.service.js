@@ -1,27 +1,28 @@
+function validarHorarios(startTime, endTime) {
+    if (!startTime || !endTime) {
+        throw new Error('Horário inicial e final são obrigatórios.');
+    }
+
+    if (startTime >= endTime) {
+        throw new Error(
+            'O horário inicial deve ser anterior ao horário final.'
+        );
+    }
+}
+
+function validarData(date) {
+    const dataReserva = new Date(date);
+    const dataAtual = new Date();
+
+    dataReserva.setHours(0, 0, 0, 0);
+    dataAtual.setHours(0, 0, 0, 0);
+
+    if (dataReserva < dataAtual) {
+        throw new Error('Não é possível criar uma reserva no passado.');
+    }
+}
+
 export function createReservaService(prisma) {
-
-    function validarHorarios(startTime, endTime) {
-        if (!startTime || !endTime) {
-            throw new Error('Horário inicial e final são obrigatórios.');
-        }
-
-        if (startTime >= endTime) {
-            throw new Error('O horário inicial deve ser anterior ao horário final.')
-        }
-    }
-
-    function validarData(date) {
-        const dataReserva = new Date(date);
-        const dataAtual = new Date();
-
-        dataReserva.setHours(0, 0, 0, 0);
-        dataAtual.setHours(0, 0, 0, 0);
-
-        if (dataReserva < dataAtual) {
-            throw new Error('Não é possível criar uma reserva no passado.');
-        }
-    }
-
     async function validarUsuario(usuarioId) {
         const usuario = await prisma.usuario.findUnique({
             where: { id: usuarioId },
