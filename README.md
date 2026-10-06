@@ -51,6 +51,11 @@ Consulte os documentos para mais detalhes sobre visão do projeto, decisões de 
 
 - [Visão do Projeto](./docs/visao.md)
 - [Plano de Teste](./docs/plano_teste.md)
+- [Índice da documentação e checklist P1](./docs/README.md)
+- [User Stories e critérios de aceitação](./docs/user-stories.md)
+- [Plano das seis iterações](./docs/plano_iteracoes.md)
+- [Plano da Iteração 1](./docs/iteracoes/iteracao01.md)
+- [Estado dos testes](./docs/estado_testes.md)
 
 ## 🛠️ Tecnologias
 
@@ -217,6 +222,39 @@ Exemplo de resposta:
 }
 ```
 
+### Reservas
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| POST | `/api/reservas` | Cria reserva ATIVA |
+| GET | `/api/reservas` | Lista reservas |
+| GET | `/api/reservas/:id` | Consulta pelo ID |
+| GET | `/api/reservas/usuario/:usuarioId` | Lista por usuário |
+| GET | `/api/reservas/quadra/:quadraId` | Lista por quadra |
+| PUT | `/api/reservas/:id` | Atualiza dados da reserva |
+| DELETE | `/api/reservas/:id` | Exclui registro; não equivale ao cancelamento lógico planejado na US03 |
+
+Contrato da criação (US01): `usuarioId`/`quadraId` são inteiros JSON positivos;
+`date` é `YYYY-MM-DD`; `startTime`/`endTime` são `HH:mm` válidos. Os horários são
+interpretados em `America/Fortaleza`; início deve estar no futuro, inclusive no
+dia atual. O dia é armazenado à meia-noite UTC apenas por convenção de calendário.
+A criação fixa estado ATIVA e verifica sobreposição de reservas ATIVA na mesma
+transação. Intervalos contíguos e horários de reservas CANCELADA não bloqueiam
+uma nova reserva. Entradas inválidas retornam 400; erros inesperados retornam 500
+sem detalhes internos. Não há autenticação: usar apenas homologação restrita.
+
+```json
+{
+  "usuarioId": 1,
+  "quadraId": 1,
+  "date": "2099-10-10",
+  "startTime": "14:00",
+  "endTime": "15:00"
+}
+```
+
+O exemplo usa uma data futura de teste, não uma reserva real.
+
 ## Executando o projeto
 
 ### Pré-requisitos
@@ -270,13 +308,13 @@ DATABASE_URL="file:./dev.db"
 Gere o Prisma Client:
 
 ```bash
-pnpm prisma generate
+pnpm prisma generate --config prisma7.config.ts
 ```
 
 Execute as migrations do banco:
 
 ```bash
-pnpm prisma migrate dev
+pnpm prisma migrate dev --config prisma7.config.ts
 ```
 
 Inicie o servidor:
@@ -321,7 +359,10 @@ http://localhost:5173
 
 O backend possui testes automatizados utilizando **Jest** e **Supertest**.
 
-Os testes utilizam mocks do Prisma para permitir que as funcionalidades sejam verificadas sem modificar o banco de dados real da aplicação.
+Os testes unitários e as suítes iniciais de integração usam mocks do Prisma.
+A suíte `tests/integration/reservas.persistencia.test.js` utiliza a aplicação
+completa e um SQLite temporário exclusivo, aplicando as migrations do projeto.
+Nenhuma dessas suítes deve modificar o banco de desenvolvimento.
 
 ### Executar todos os testes
 
@@ -443,13 +484,13 @@ As próximas etapas planejadas para o Arena UFRN incluem:
 
 ### Reservas
 
-* criação de reservas;
-* consulta de reservas;
-* cancelamento de reservas;
-* relacionamento entre usuários e quadras;
-* definição de data e horário;
-* verificação de conflitos;
-* controle de disponibilidade.
+O backend já cria, consulta, atualiza e exclui reservas, com relacionamentos e
+validações de data/horário/conflito. Permanecem como evolução:
+
+* cancelamento lógico preservando histórico (US03);
+* cálculo de disponibilidade (US04);
+* regras de uso equitativo e reagendamento seguro;
+* verificação de concorrência entre múltiplas instâncias da aplicação.
 
 ### Autenticação e autorização
 
