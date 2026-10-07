@@ -164,7 +164,9 @@ zero Falhou**, exit code 0. Dados foram isolados em SQLite temporário.
 | QA12 | Exclusão com vínculo retorna 500 e preserva quadra/reserva | Passou |
 | QA13 | Falha injetada retorna 500 sem detalhes internos | Passou |
 
-BUG-QA01–BUG-QA04 foram corrigidos e retestados **na árvore atual**, ainda antes
-do commit destas correções. O 500 na exclusão com vínculo permanece melhoria
+BUG-QA01–BUG-QA04 foram corrigidos e retestados **na árvore atual**, antes do
+commit; posteriormente as correções foram publicadas em `344ce75`, e a
+documentação em `bcbb0c1`, no [PR #11](https://github.com/pauloandrehxh/arena-ufrn/pull/11).
+O 500 na exclusão com vínculo permanece melhoria
 de negócio, não foi transformado em conflito nesta revisão. Os 13 cenários não
 comprovam todos os fluxos possíveis nem o aceite integral da iteração.

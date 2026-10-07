@@ -89,3 +89,10 @@ de Luis, adicionando relatório de reservas. O commit foi incorporado por
 fast-forward sem sobrescrever o arquivo dele. O relatório contém expectativas,
 não tabela de resultados executados/evidências; sua aprovação é condicionada.
 Não foram atribuídas execuções de QA ao colega sem comprovação.
+
+Correções e documentação foram publicadas em `344ce75` e `bcbb0c1`, e foi aberto
+o [PR #11](https://github.com/pauloandrehxh/arena-ufrn/pull/11) de
+`feature/us01-reservas` para `main`. Nenhum merge foi realizado. A consulta ao
+PR confirmou Backend CI em execução no
+[run 37553935374](https://github.com/pauloandrehxh/arena-ufrn/actions/runs/37553935374).
+Execução em andamento não comprova sucesso do scanner nem Quality Gate.

@@ -20,6 +20,7 @@
 - [Auditoria posterior e bloqueio de autenticação LABENS](./evidencias/t2-auditoria-sonarqube.md).
 - [Pendências e roteiro de publicação manual da T2](./entrega-t2.md).
 - [Descrição preparada do PR da T2](./pr-t2.md).
+- [PR #11 da US01 para main](https://github.com/pauloandrehxh/arena-ufrn/pull/11) — aberto, sem merge.
 
 ## Checklist da P1
 
