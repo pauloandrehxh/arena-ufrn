@@ -1,65 +1,50 @@
-function validarHorarios(startTime, endTime) {
-    if (!startTime || !endTime) {
-        throw new Error('Horário inicial e final são obrigatórios.');
-    }
-
-    if (startTime >= endTime) {
-        throw new Error(
-            'O horário inicial deve ser anterior ao horário final.'
-        );
-    }
-}
-
-function validarData(date) {
-    const dataReserva = new Date(date);
-    const dataAtual = new Date();
-
-    dataReserva.setHours(0, 0, 0, 0);
-    dataAtual.setHours(0, 0, 0, 0);
-
-    if (dataReserva < dataAtual) {
-        throw new Error('Não é possível criar uma reserva no passado.');
-    }
-}
+import {
+    ReservaValidationError,
+    normalizarDataReserva,
+    validarIdReserva,
+    validarHorariosReserva,
+    validarDataFuturaReserva,
+} from '../lib/reserva.validation.js';
 
 export function createReservaService(prisma) {
-    async function validarUsuario(usuarioId) {
-        const usuario = await prisma.usuario.findUnique({
+    async function validarUsuario(usuarioId, banco = prisma) {
+        const usuario = await banco.usuario.findUnique({
             where: { id: usuarioId },
         });
 
         if (!usuario) {
-            throw new Error('Usuário não encontrado.');
+            throw new ReservaValidationError('Usuário não encontrado.');
         }
 
         if (!usuario.active) {
-            throw new Error('Usuário inativo.');
+            throw new ReservaValidationError('Usuário inativo.');
         }
 
         return usuario;
     }
 
-    async function validarQuadra(quadraId) {
-        const quadra = await prisma.quadra.findUnique({
+    async function validarQuadra(quadraId, banco = prisma) {
+        const quadra = await banco.quadra.findUnique({
             where: { id: quadraId },
         });
 
         if (!quadra) {
-            throw new Error('Quadra não encontrada.');
+            throw new ReservaValidationError('Quadra não encontrada.');
         }
 
         if (!quadra.active) {
-            throw new Error('Quadra indisponível.');
+            throw new ReservaValidationError('Quadra indisponível.');
         }
 
         return quadra;
     }
 
-    async function verificarConflito(data) {
-        const conflito = await prisma.reserva.findFirst({
+    async function verificarConflito(data, banco = prisma) {
+        const conflito = await banco.reserva.findFirst({
             where: {
                 quadraId: data.quadraId,
                 date: data.date,
+                status: 'ATIVA',
                 startTime: {
                     lt: data.endTime,
                 },
@@ -70,7 +55,7 @@ export function createReservaService(prisma) {
         });
 
         if (conflito) {
-            throw new Error(
+            throw new ReservaValidationError(
                 'Já existe uma reserva para essa quadra nesse horário.'
             );
         }
@@ -114,20 +99,33 @@ export function createReservaService(prisma) {
     }
 
     async function criarReserva(data) {
-        await validarUsuario(data.usuarioId);
-        await validarQuadra(data.quadraId);
+        validarIdReserva(data.usuarioId, 'usuarioId');
+        validarIdReserva(data.quadraId, 'quadraId');
+        const date = normalizarDataReserva(data.date);
+        validarHorariosReserva(data.startTime, data.endTime);
+        validarDataFuturaReserva(date, data.startTime);
 
-        validarData(data.date);
-        validarHorarios(data.startTime, data.endTime);
+        const dados = {
+            usuarioId: data.usuarioId,
+            quadraId: data.quadraId,
+            date,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            status: 'ATIVA',
+        };
 
-        await verificarConflito(data);
+        return prisma.$transaction(async (banco) => {
+            await validarUsuario(dados.usuarioId, banco);
+            await validarQuadra(dados.quadraId, banco);
+            await verificarConflito(dados, banco);
 
-        return prisma.reserva.create({
-            data,
-            include: {
-                usuario: true,
-                quadra: true,
-            },
+            return banco.reserva.create({
+                data: dados,
+                include: {
+                    usuario: true,
+                    quadra: true,
+                },
+            });
         });
     }
 
@@ -153,11 +151,12 @@ export function createReservaService(prisma) {
             await validarQuadra(data.quadraId);
         }
 
-        validarData(dadosAtualizados.date);
-        validarHorarios(
+        dadosAtualizados.date = normalizarDataReserva(dadosAtualizados.date);
+        validarHorariosReserva(
             dadosAtualizados.startTime,
             dadosAtualizados.endTime
         );
+        validarDataFuturaReserva(dadosAtualizados.date, dadosAtualizados.startTime);
 
         const conflito = await prisma.reserva.findFirst({
             where: {
@@ -166,6 +165,7 @@ export function createReservaService(prisma) {
                 },
                 quadraId: dadosAtualizados.quadraId,
                 date: dadosAtualizados.date,
+                status: 'ATIVA',
                 startTime: {
                     lt: dadosAtualizados.endTime,
                 },
@@ -183,7 +183,10 @@ export function createReservaService(prisma) {
 
         return prisma.reserva.update({
             where: { id },
-            data,
+            data: {
+                ...data,
+                ...(data.date === undefined ? {} : { date: dadosAtualizados.date }),
+            },
             include: {
                 usuario: true,
                 quadra: true,

@@ -41,6 +41,39 @@ beforeEach(() => {
 });
 
 describe('Integração - API de quadras', () => {
+  test.each(['abc', '0', '-1', '1.5', '2147483648'])(
+    'retorna 400 para ID inválido %s em consulta/alteração/exclusão', async (id) => {
+      expect((await request(app).get(`/api/quadras/${id}`)).status).toBe(400);
+      expect((await request(app).put(`/api/quadras/${id}`).send({ name: 'Quadra' })).status).toBe(400);
+      expect((await request(app).delete(`/api/quadras/${id}`)).status).toBe(400);
+      expect(prismaMock.quadra.findUnique).not.toHaveBeenCalled();
+      expect(prismaMock.quadra.update).not.toHaveBeenCalled();
+      expect(prismaMock.quadra.delete).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([{ name: '' }, { name: '   ' }, { name: 123 }, {}])(
+    'retorna 400 e não persiste nome inválido %p', async (body) => {
+      expect((await request(app).post('/api/quadras').send(body)).status).toBe(400);
+      expect((await request(app).put('/api/quadras/1').send(body)).status).toBe(400);
+      expect(prismaMock.quadra.create).not.toHaveBeenCalled();
+      expect(prismaMock.quadra.update).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([
+    ['get', '/api/quadras', 'findMany'],
+    ['get', '/api/quadras/1', 'findUnique'],
+    ['post', '/api/quadras', 'create'],
+    ['put', '/api/quadras/1', 'update'],
+    ['delete', '/api/quadras/1', 'delete'],
+  ])('retorna 500 genérico para falha em %s %s', async (method, path, dependencia) => {
+    prismaMock.quadra[dependencia].mockRejectedValue(new Error('SEGREDO_DEPENDENCIA'));
+    const response = await request(app)[method](path).send({ name: 'Quadra' });
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(response.body)).not.toContain('SEGREDO_DEPENDENCIA');
+  });
+
   describe('GET /api/quadras', () => {
     test('deve retornar todas as quadras', async () => {
       const quadras = [

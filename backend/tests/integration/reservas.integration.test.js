@@ -14,6 +14,7 @@ import { createReservaController } from '../../src/controllers/reserva.controlle
 import { createReservaRoutes } from '../../src/routes/reserva.routes.js';
 
 const prismaMock = {
+    $transaction: jest.fn(),
     usuario: {
         findUnique: jest.fn(),
     },
@@ -43,6 +44,7 @@ app.use('/api/reservas', reservaRoutes);
 
 beforeEach(() => {
     jest.resetAllMocks();
+    prismaMock.$transaction.mockImplementation((operacao) => operacao(prismaMock));
 });
 
 describe('Integração - API de reservas', () => {
@@ -213,6 +215,31 @@ describe('Integração - API de reservas', () => {
     });
 
     describe('POST /api/reservas', () => {
+        test.each([
+            ['usuarioId', '1'], ['usuarioId', -1], ['quadraId', 1.5],
+            ['date', '2099-02-30'], ['date', '2099-10-10T00:00:00Z'],
+            ['date', 123], ['startTime', '9:00'], ['startTime', '24:00'],
+            ['endTime', '15:60'], ['endTime', ['15:00']],
+        ])('retorna 400 para %s=%p sem persistir', async (campo, valor) => {
+            const response = await request(app).post('/api/reservas').send({
+                usuarioId: 1, quadraId: 1, date: '2099-10-10',
+                startTime: '14:00', endTime: '15:00', [campo]: valor,
+            });
+            expect(response.status).toBe(400);
+            expect(prismaMock.reserva.create).not.toHaveBeenCalled();
+        });
+
+        test('retorna 500 sem expor erro interno de persistência', async () => {
+            prismaMock.usuario.findUnique.mockRejectedValue(new Error('segredo do banco'));
+            const response = await request(app).post('/api/reservas').send({
+                usuarioId: 1, quadraId: 1, date: '2099-10-10',
+                startTime: '14:00', endTime: '15:00',
+            });
+            expect(response.status).toBe(500);
+            expect(response.body).toEqual({ message: 'Erro ao criar reserva.' });
+            expect(prismaMock.reserva.create).not.toHaveBeenCalled();
+        });
+
         test('deve criar uma reserva válida', async () => {
             prismaMock.usuario.findUnique.mockResolvedValue({
                 id: 1,
@@ -318,6 +345,23 @@ describe('Integração - API de reservas', () => {
     });
 
     describe('PUT /api/reservas/:id', () => {
+        test('retorna 400 sem atualizar data de calendário inválida', async () => {
+            prismaMock.reserva.findUnique.mockResolvedValue({ id: 1 });
+            const response = await request(app).put('/api/reservas/1').send({ date: '2099-02-30' });
+            expect(response.status).toBe(400);
+            expect(prismaMock.reserva.update).not.toHaveBeenCalled();
+        });
+
+        test('retorna 400 para horário inválido sem atualizar reserva', async () => {
+            prismaMock.reserva.findUnique.mockResolvedValue({
+                id: 1, usuarioId: 1, quadraId: 1, date: new Date('2099-10-10'),
+                startTime: '14:00', endTime: '15:00',
+            });
+            const response = await request(app).put('/api/reservas/1').send({ startTime: '24:00' });
+            expect(response.status).toBe(400);
+            expect(prismaMock.reserva.update).not.toHaveBeenCalled();
+        });
+
         test('deve atualizar uma reserva', async () => {
             const reservaExistente = {
                 id: 1,

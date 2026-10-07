@@ -1,76 +1,131 @@
-# Plano Geral de Testes de Software
+# Documento de Visão — Arena UFRN
 
-**Projeto:** Sistema Acadêmico de gestão da quadra
+**Data da revisão:** 06/10/2026
 
-**Equipe/Grupo:** Equipe de teste de Software / Processo easYProcess (YP) 
+**Versão:** 2.0
 
-**Data:** 06/09/2026  
+**Equipe:** Paulo André (@pauloandrehxh) e Luis Felipe (@Luisfelipelinhares)
 
-**Versão:** 1.0  
+## 1. Introdução
 
+### 1.1. Propósito
 
-## 1. Visão Geral do Sistema
+Definir o problema, o escopo e os requisitos do sistema acadêmico de gerenciamento e reserva de quadras de areia da UFRN. Este documento orienta o desenvolvimento e os testes da dupla na disciplina Testes de Software 2026.2.
 
-O sistema é uma aplicação web acadêmica desenvolvida para o contexto universitário com o propósito de gerenciar a infraestrutura, a disponibilidade e o uso da quadra de areia da instituição. Seu foco principal é automatizar o fluxo de agendamentos, permitir a consulta de horários em tempo real e operacionalizar o cancelamento de reservas, integrando regras de negócio automatizadas para evitar o monopólio da estrutura por determinados alunos ou cursos. O público-alvo é composto por Discentes, Docentes e Administradores/Gestores do espaço esportivo, provendo um ambiente integrado, transparente e equitativo para operações e consultas esportivas cotidianas no campus.
+Esta revisão regulariza a P1 a partir do código e do histórico Git. O documento anterior era um plano de testes com referências a entidades alheias ao projeto. O planejamento aqui registrado foi elaborado agora; não comprova decisões ou aprovações históricas de usuários reais.
 
-## 2. Escopo do Plano de Testes
-### 2.1. Itens no Escopo (O que será testado)
-- Testes Unitários de regras de negócio e validações de entidades.
-- Testes de Integração entre os módulos de gerenciamento e persistência de dados.
-- Testes dos Requisitos Funcionais (RF01 a RF09), cobrindo inserção, listagem, atualização e exclusão (CRUD) de todas as entidades acadêmicas, bem como os fluxos de login e logout.
-- Testes dos Requisitos Não Funcionais (RNF) definidos (compatibilidade com navegadores, eficiência de consultas e auditoria/log).
+### 1.2. Escopo
 
-### 2.2. Itens Fora do Escopo (O que NÃO será testado)
-- Integração com serviços de diretório corporativo externos (LDAP/SSO institucional), caso não previstos no escopo inicial.
-- Desempenho de infraestrutura física de servidores de rede da universidade.
+O produto deve permitir consultar quadras e disponibilidade, reservar horários, cancelar e reagendar reservas, acompanhar o uso e administrar os cadastros. A evolução inclui autenticação, autorização e limites de uso equitativo.
 
----
+**Base existente:** backend Node.js/Express, Prisma e SQLite; entidades Usuario, Quadra e Reserva; operações CRUD; validações básicas de reservas; frontend React/Vite/Tailwind com página inicial e consulta de quadras; testes Jest/Supertest.
 
-## 3. Estratégia de Testes por Requisitos Não Funcionais (RNF)
+**Ainda não entregue como fluxo completo:** reserva pela interface, cancelamento preservando histórico, cálculo de disponibilidade, autenticação, papéis de acesso e limites anti-monopólio. Um campo ou endpoint existente não comprova o atendimento integral de um requisito.
 
-| Identificador RNF | Tipo / Categoria | Descrição do Requisito | Abordagem / Estratégia de Teste | Critério de Aceitação / Métrica |
-| :--- | :--- | :--- | :--- | :--- |
-| **RNF001** | Portabilidade / Compatibilidade | Deve ser acessível via navegador (Firefox e Chrome). | Testes de renderização e compatibilidade cross-browser manuais e automatizados. | Comportamento, layout e funcionalidades operando sem falhas críticas no Firefox e Chrome. |
-| **RNF002** | Desempenho / Eficiência | As consultas devem ser eficientes, executando em milissegundos. | Testes de performance automatizados em rotas de listagem de entidades (ex: turmas e componentes). | Tempo de resposta inferior a 500ms para 95% das consultas de listagem com volume padrão de dados. |
-| **RNF003** | Segurança / Auditoria | Deve manter um log de todos os acessos e das funções executadas pelo usuário. | Testes de integração validando a gravação de logs de auditoria nas operações de escrita e autenticação. | Presença de registros consistentes (usuário, ação, data/hora) na base de logs para cada transação realizada. |
+**Fora do escopo:** pagamentos, integração institucional real LDAP/SSO, envio real de e-mails, gestão de turmas/departamentos/centros e infraestrutura física da universidade.
 
----
+## 2. Problema e oportunidade
 
-## 4. Tipos e Níveis de Teste
+O problema de produto adotado é a dificuldade de consultar e organizar o uso das quadras sem disputas de horários ou concentração de reservas. A oportunidade é centralizar a agenda e tornar o acesso previsível e equitativo.
 
-### 4.1. Testes de Unidade (Unit)
-- **Foco:** Validação isolada de regras de negócio, restrições de chaves primárias e relacionamentos do modelo conceitual 
-- **Responsável:** Desenvolvedor.
-- **Ferramentas:** JUnit (ou equivalente da stack adotada).
-- **Métrica Esperada:** Cobertura de código mínima de 80% nas classes de domínio e serviços.
+A solução proposta é uma aplicação web com catálogo, agenda e regras de validação. Essa formulação é uma hipótese de planejamento baseada no escopo existente, não resultado de entrevistas ou pesquisa de campo.
 
-### 4.2. Testes de Integração
-- **Foco:** Validação da comunicação entre camadas de serviço, repositório e banco de dados, assegurando a integridade referencial (ex: verificar se um departamento pertence a um centro válido ao inserir).
-- **Responsável:** Desenvolvedor / Analista de Testes.
-- **Ferramentas:** Ferramentas de testes de integração com banco de dados em memória ou transacional isolado.
+## 3. Stakeholders e perfis
 
-### 4.3. Testes de Sistema e Aceitação
-- **Foco:** Validação de ponta a ponta (E2E) dos fluxos descritos nas User Stories (US01 a US09), com foco na validação de perfis de acesso (Administrador, Docente, Discente, Coordenador).
-- **Responsável:** Equipe de Teste e Clientes (Professora Sandra e Professor Taciano / POs).
+### 3.1. Equipe
 
+| Integrante | Responsabilidade no processo |
+|---|---|
+| Paulo André — @pauloandrehxh | Análise e desenvolvimento das histórias atribuídas; QA das histórias de Luis Felipe |
+| Luis Felipe — @Luisfelipelinhares | Análise e desenvolvimento das histórias atribuídas; QA das histórias de Paulo André |
 
-## 5. Ambiente de Testes
-- **Hardware/Servidores:** Ambiente de homologação dedicado para testes da equipe e validação com os clientes.
-- **Banco de Dados:** Base de dados relacional isolada para testes, populada com dados sintéticos representativos do cenário acadêmico.
-- **Sistemas / APIs Externas:** Simulações e stubs para eventuais dependências externas.
+Não há outros integrantes. Representante de entrega e interlocutor institucional ainda precisam ser confirmados; não são atribuídos a professores ou clientes sem evidência.
 
-## 6. Ferramentas Utilizadas
-| Categoria | Ferramenta Escolhida | Finalidade |
-| :--- | :--- | :--- |
-| Gestão de Testes | GitHub Issues / Gerenciador de Tarefas do Projeto | Rastreamento de casos de teste, defeitos e melhorias |
-| Automação Unit/Integração | JUnit / Framework de Testes da Stack | Execução automatizada de testes unitários e de integração |
-| Análise de Desempenho (RNF002) | Ferramentas de medição de tempo de resposta / Profilers | Validação da eficiência das consultas de banco de dados |
+### 3.2. Perfis de usuário
 
----
+| Perfil | Objetivo | Necessidades |
+|---|---|---|
+| Aluno/usuário da comunidade acadêmica | Organizar seu uso das quadras | Consultar disponibilidade, reservar, cancelar, reagendar e acompanhar suas reservas |
+| Gestor do espaço esportivo | Administrar o catálogo e a agenda | Manter quadras e usuários, suspender agendamentos e acompanhar utilização |
 
-## 7. Riscos e Contingências
-| Risco Identificado | Impacto no Teste | Ação Mitigatória / Contingência |
-| :--- | :--- | :--- |
-| Não aprendizado das ferramentas utilizadas pelos componentes do grupo | Alto | Reforçar estudos sobre as ferramentas e aulas com a integrante que conhece a ferramenta (conforme planejamento de risco do projeto). |
-| Ausência por qualquer motivo do cliente nas sessões de aceitação | Média | Planejar o cronograma tendo em base a agenda do cliente e antecipar homologações parciais. |
-| Inconsistências de desempenho em consultas complexas (RNF002) | Médio | Otimização prévia de índices no modelo conceitual e refatoração de queries críticas. |
+São perfis de projeto, não personas entrevistadas. Não se pressupõem coordenadores ou docentes com fluxos próprios. Os papéis de acesso ainda não existem no modelo atual.
+
+## 4. Requisitos
+
+P0 = essencial; P1 = importante; P2 = evolução desejável. Os estados abaixo decorrem de inspeção; aceite exige testes e critérios do [backlog](./user-stories.md).
+
+### 4.1. Requisitos funcionais
+
+| ID | O sistema deve… | Prioridade | História | Situação da base |
+|---|---|---|---|---|
+| RF01 | Criar reserva para usuário e quadra ativos em intervalo válido e sem sobreposição | P0 | US01 | Parcial: backend existente, validações a completar |
+| RF02 | Cadastrar, listar, consultar e atualizar quadras | P0 | US02 | Backend existente; validações e aceite a completar |
+| RF03 | Cancelar reserva preservando registro e liberando o intervalo | P0 | US03 | Pendente; DELETE atual remove o registro |
+| RF04 | Consultar disponibilidade de uma quadra por data | P0 | US04 | Pendente; listagem de reservas não calcula disponibilidade |
+| RF05 | Autenticar usuário e encerrar sua sessão | P0 | US05 | Pendente |
+| RF06 | Manter usuários com e-mail/matrícula únicos e controlar sua situação ativa | P0 | US06 | CRUD existente; autorização e aceite pendentes |
+| RF07 | Exibir somente as reservas do usuário autenticado | P1 | US07 | Consulta por ID de usuário existente, sem autenticação |
+| RF08 | Suspender e reativar novos agendamentos de uma quadra | P1 | US08 | Campo active existe; fluxo de gestão pendente |
+| RF09 | Reagendar reserva sem conflito e sem perder o agendamento em caso de falha | P1 | US09 | Atualização básica existente; fluxo e garantias pendentes |
+| RF10 | Aplicar os mesmos limites de uso a todos os alunos | P1 | US10 | Pendente; parâmetros precisam de decisão |
+| RF11 | Consultar histórico pessoal por período e estado | P2 | US11 | Pendente como fluxo; existem campos de estado |
+| RF12 | Consultar agenda de gestão por quadra, período e estado | P2 | US12 | Consultas básicas existentes; filtros e autorização pendentes |
+
+### 4.2. Requisitos não funcionais
+
+| ID | Requisito e condição de verificação |
+|---|---|
+| RNF01 — Segurança | Após US05, negar operações protegidas sem sessão válida; dados pessoais restritos ao titular/gestor autorizado. Se houver senha, armazenar apenas hash seguro. Não publicar secrets. |
+| RNF02 — Integridade | Não persistir duas reservas ativas sobrepostas para a mesma quadra/data, inclusive sob concorrência; operação rejeitada não altera a reserva original. Verificar com persistência isolada e requisições concorrentes. |
+| RNF03 — Usabilidade | Nos fluxos entregues na interface, controles críticos utilizáveis em 360 px e 1280 px de largura, mensagens de erro compreensíveis e navegação por teclado. Verificação ainda pendente. |
+| RNF04 — Compatibilidade | Fluxos de interface entregues devem funcionar em Chrome, Firefox e Edge; registrar versões e resultados por navegador. |
+| RNF05 — Desempenho | Meta de p95 menor que 2 s nas consultas de catálogo/disponibilidade. Volume de dados, concorrência e ambiente devem ser definidos antes da medição; não há resultado nem protocolo completo aprovado. |
+| RNF06 — Testabilidade | Testes unitários isolam dependências; integrações identificam se usam mocks ou banco; comandos e ambiente são reproduzíveis. Meta de 80% em statements, branches, functions e lines dos services de negócio, sem remover código da coleta para atingir a meta. |
+
+RNF05 consolida a meta de 2 s do plano de testes anterior, eliminando a referência divergente a 500 ms. RNF06 é meta do projeto, não percentual imposto pela P1/T2/T3 nem garantia aplicada pelo Jest atual.
+
+## 5. Restrições e decisões pendentes
+
+- Equipe de duas pessoas; seis iterações, duas por unidade, com ao menos uma história por integrante em cada iteração.
+- Backend é o foco inicial dos testes. I1/I2 são incrementos de API em homologação, não serviço público seguro; autenticação será trabalhada na I3.
+- O código de referência usa SQLite e Better SQLite3. PostgreSQL mencionado nas instruções do workspace não está implementado nesta base. Migração só deve ser documentada como concluída após alteração e verificação reais.
+- Datas de início/fim das iterações e cronograma do semestre precisam de confirmação. Não retroagir o planejamento para simular execução anterior.
+- US01 usa America/Fortaleza, data YYYY-MM-DD e horários HH:mm; início deve estar no futuro, inclusive no dia atual. O dia é armazenado à meia-noite UTC por convenção, não como instante real da reserva. Contrato aprovado no início da T2.
+- Horário de funcionamento, duração máxima, antecedência mínima adicional, limites por aluno/curso e destino de reservas durante manutenção estão pendentes. Não introduzir números arbitrários.
+- US03 adota cancelamento lógico e repetição idempotente; somente reservas ATIVA e futuras são canceláveis. A interpretação de data/hora e fuso deve ser definida no detalhamento antes da implementação.
+- A autenticação da I3 deve ser definida antes de escolher credencial/token/sessão. E-mail ou matrícula isoladamente não são prova segura de identidade.
+- Não há campo de curso no modelo atual; limites por curso dependem de aprovação e modelagem adicional.
+
+## 6. Riscos
+
+Todos os riscos abaixo foram registrados nesta revisão, em 06/10/2026; são riscos previstos, não incidentes comprovados.
+
+| ID | Risco | Prioridade | Responsável | Mitigação |
+|---|---|---|---|---|
+| R01 | Documentação divergir do código | Alta | Paulo André | Vincular estados a código/commit e separar planejado de verificado |
+| R02 | Capacidade insuficiente da dupla | Alta | Luis Felipe | Fatiar escopo e revisar dependências em cada iteração |
+| R03 | Reserva dupla sob concorrência | Alta | Paulo André | Garantia transacional e teste com banco isolado |
+| R04 | Erros de data, hora e fuso | Alta | Paulo André | Definir contrato, congelar relógio nos testes e testar fronteiras |
+| R05 | SonarQube/secrets indisponíveis | Média | Luis Felipe | Verificar acesso previamente e registrar bloqueio sem inventar resultado |
+| R06 | Testes com mocks ocultarem falhas de persistência | Alta | Luis Felipe | Complementar integração real quando necessário |
+| R07 | Interface atrasar aceite de fluxos completos | Média | Luis Felipe | Distinguir aceite de API de E2E e planejar interface por incremento |
+| R08 | Mudança de banco gerar retrabalho | Média | Paulo André | Confirmar decisão antes de migrations e testes específicos |
+| R09 | Exposição de dados em API sem autorização | Alta | Paulo André | Restringir homologação; implementar RNF01 antes de uso público |
+| R10 | Regras de equidade/manutenção indefinidas | Alta | Luis Felipe | Resolver parâmetros antes de iniciar US08/US10 |
+
+## 7. Critérios de sucesso
+
+| Métrica | Estado atual | Meta | Marco |
+|---|---|---|---|
+| Rastreabilidade | Backlog e distribuição documentados nesta revisão | Cada RF ligado a US, critérios e evidências | Revisão de cada iteração |
+| Aceitação | QA de histórias não executado nesta revisão | Cenários executados e registrados pelo outro integrante | Fim de cada iteração |
+| Cobertura dos services | Ver [estado dos testes](./estado_testes.md) | 80% nas quatro métricas | Revisão de cada incremento |
+| Segurança | Sem autenticação na main auditada | RNF01 verificado | I3, antes de uso público |
+| Integridade | Validação básica, sem comprovação de concorrência | RNF02 verificado | Antes de disponibilizar reservas a usuários reais |
+
+## 8. Referências
+
+- [Índice e checklist da P1](./README.md)
+- [Modelo de visão YP-Agentic](https://github.com/tacianosilva/engenharia-software/blob/main/yp-agentic/templates/doc-visao.md)
+- [Backlog](./user-stories.md), [iterações](./plano_iteracoes.md) e [plano de testes](./plano_teste.md)
+- Código: [schema](../backend/prisma/schema.prisma), [services](../backend/src/services/) e [frontend](../frontend/src/)
