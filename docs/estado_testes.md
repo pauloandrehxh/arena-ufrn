@@ -106,3 +106,13 @@ Os commits da US01 foram encontrados publicados na branch `feature/us01-reservas
 O [QA da US02](./qa/t2-us02-quadras.md) foi executado contra a contribuição histórica de Luis Felipe e repetido contra a aplicação atual: 13 casos, sete passaram e seis falharam. O relatório identifica quatro grupos de bugs e explicita o uso do schema atual. Não há aceite nem reteste após correção comprovado.
 
 As consultas ao LABENS confirmaram servidor UP e HTTP 401 nas APIs do projeto: [evidência de bloqueio](./evidencias/t2-auditoria-sonarqube.md). Sem autenticação não foi verificado Quality Gate nem inventado resultado da análise.
+
+## 11. Correções de quadras e reteste
+
+Paulo corrigiu os quatro grupos de bugs na branch atual sobre `80509e2`. Depois
+de gerar novamente o Prisma Client, **134 testes Jest passaram em sete suítes**;
+cobertura global **77,92% statements/lines, 71,25% branches e 90,32% functions**.
+O runner de QA separado passou **13 casos, zero falhas**. Os resultados históricos
+da contribuição de Luis foram preservados, não substituídos por uma aprovação
+retroativa. Detalhes: [relatório QA](./qa/t2-us02-quadras.md) e
+[evidência do reteste](./evidencias/t2-auditoria-sonarqube.md).

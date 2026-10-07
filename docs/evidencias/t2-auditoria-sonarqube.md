@@ -58,3 +58,34 @@ real com credencial e confirmar a revisão analisada.
   afetam apenas documentos/Dockerfile do OpenCode, fora da entrega acadêmica.
   Não foi realizado merge/rebase nem descartado trabalho local. Atualização
   fast-forward depende de autorização explícita, conforme regras do workspace.
+
+## Reteste após correções de quadras
+
+Sobre a revisão publicada `80509e2`, Paulo corrigiu BUG-QA01–BUG-QA04 na árvore
+de trabalho. A primeira tentativa de execução falhou porque o Prisma Client
+não estava gerado após reinstalação de dependências pelo pnpm. Executou-se
+`pnpm prisma generate --config prisma7.config.ts`, sem modificar banco/schema.
+As execuções seguintes passaram:
+
+```bash
+pnpm test:coverage --runInBand --coverageDirectory=/tmp/opencode/arena-ufrn-t2-reteste-coverage
+pnpm qa:quadras
+```
+
+- Jest: **134 testes passaram em sete suítes**, tempo informado 1,336 s.
+- Global: **77,92% statements/lines, 71,25% branches, 90,32% functions**.
+- Services: **98,55% statements/lines, 92% branches, 100% functions**.
+- Service de reservas: **98% statements/lines, 92% branches, 100% functions**.
+- Validações de reservas e quadras: **100% nas quatro métricas**.
+- QA separado: **13 casos passaram, zero falhas**, exit code 0.
+
+Essas métricas pertencem à árvore corrigida antes do novo commit; os números
+anteriores (107 testes e seis falhas de QA) permanecem como evidência histórica.
+SonarQube autenticado e QA de Luis sobre reservas não foram executados nesta etapa.
+
+Posteriormente, o usuário instalou/autenticou o GitHub CLI; `gh auth status`
+confirmou a conta `pauloandrehxh`. Foi identificado o commit remoto `04357eb`,
+de Luis, adicionando relatório de reservas. O commit foi incorporado por
+fast-forward sem sobrescrever o arquivo dele. O relatório contém expectativas,
+não tabela de resultados executados/evidências; sua aprovação é condicionada.
+Não foram atribuídas execuções de QA ao colega sem comprovação.

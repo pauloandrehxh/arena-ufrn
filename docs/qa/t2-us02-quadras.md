@@ -135,3 +135,36 @@ Melhorias: erro explícito para exclusão com vínculos, validação consistente
 todas as operações, ampliar os testes negativos da suíte original e confirmar
 a branch da US02 refinada. Autorização de gestor depende da US05 e não foi
 declarada implementada nem testada nesta I1.
+
+## 5. Correções e reteste na branch atual
+
+Após autorização para corrigir os erros, **Paulo André** alterou as validações
+de quadras em `feature/us01-reservas`, sobre a revisão `80509e2`. As correções
+não foram feitas por Luis Felipe, não alteram a branch histórica e não substituem
+o QA que Luis deve executar sobre a US01. As seções anteriores são o resultado
+original da avaliação, não o estado da aplicação corrigida.
+
+- Service valida IDs inteiros positivos compatíveis com Prisma Int.
+- Criação e atualização rejeitam nomes não textuais, vazios ou somente espaços.
+- Controller responde 400 para validação, preservando resposta 500 genérica para
+  falhas inesperadas. Dados inválidos não chegam à gravação.
+- Foram acrescentados testes unitários e de integração para as regressões.
+
+Execução real: `pnpm qa:quadras` na aplicação atual retornou **13 Passou,
+zero Falhou**, exit code 0. Dados foram isolados em SQLite temporário.
+
+| Casos | Observação no reteste | Resultado |
+|---|---|---|
+| QA01–QA03 | Criação/consulta 201/200, lista vazia 200, inexistente 404 | Passou |
+| QA04 | ID não numérico retorna 400 | Passou |
+| QA05–QA08 | Todos os nomes inválidos retornam 400; zero registros | Passou |
+| QA09 | Nome válido atualizado com ID e estado preservados | Passou |
+| QA10 | Nome vazio retorna 400; nome anterior preservado | Passou |
+| QA11 | Exclusão sem vínculo retorna 204 | Passou |
+| QA12 | Exclusão com vínculo retorna 500 e preserva quadra/reserva | Passou |
+| QA13 | Falha injetada retorna 500 sem detalhes internos | Passou |
+
+BUG-QA01–BUG-QA04 foram corrigidos e retestados **na árvore atual**, ainda antes
+do commit destas correções. O 500 na exclusão com vínculo permanece melhoria
+de negócio, não foi transformado em conflito nesta revisão. Os 13 cenários não
+comprovam todos os fluxos possíveis nem o aceite integral da iteração.

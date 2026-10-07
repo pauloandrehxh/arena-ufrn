@@ -1,19 +1,25 @@
 # T2 — Publicação manual e pendências de conclusão
 
-O usuário escolheu **somente alterações locais**, publicação manual e manutenção
-do QA da branch histórica encontrada. Não executar automaticamente commits, push,
-merge, rebase, alteração de issues ou criação de PRs.
+O usuário autorizou posteriormente corrigir as pendências e abrir o PR de
+`feature/us01-reservas` para `main`. Não foi autorizado merge na main. A criação
+do PR depende de autenticação GitHub nesta sessão.
 
 ## 1. Estado verificado
 
-- US01 implementada e publicada em `feature/us01-reservas`, revisão `da3f16a`.
-- 107 testes em sete suítes passaram na reexecução; cobertura real registrada em
+- US01 e QA histórico publicados em `feature/us01-reservas`, revisão `80509e2`.
+- Após correções de quadras, 134 testes em sete suítes passaram; cobertura registrada em
   [evidência da auditoria](./evidencias/t2-auditoria-sonarqube.md).
-- [QA da US02](./qa/t2-us02-quadras.md) executado: sete casos passaram, seis
-  falharam; não é aceite da história. O colega precisa corrigir e receber reteste.
+- [QA da US02](./qa/t2-us02-quadras.md): avaliação histórica com sete casos aprovados
+  e seis falhos; reteste na implementação corrigida por Paulo com 13 aprovados.
+  Isso não comprova o QA de Luis sobre a US01 nem autoria de Luis nas correções.
 - Página da T2 preparada no outro repositório:
   `bsi-tasks/softwaretesting/20262/tarefas/pauloandrehxh/tarefa02.md`.
-- Novos relatórios, runner e alterações da página ainda locais, sem novos commits.
+- Runner e relatório histórico já publicados nos commits `a6d4fc4` e `80509e2`.
+  As correções e o reteste desta revisão aguardam commit/push.
+- Luis publicou `docs/qa/t2-us01-reservas.md` em `04357eb`, incorporado por
+  fast-forward sem alterações no documento dele. O relatório contém resultados
+  esperados e aprovação condicionada, mas ainda precisa registrar Passou/Falhou,
+  resultados observados e evidências reais de execução por caso.
 
 ## 2. SonarQube LABENS
 
@@ -29,12 +35,14 @@ merge, rebase, alteração de issues ou criação de PRs.
 Atualmente as APIs do projeto retornam 401. Não registrar análise como aprovada
 enquanto esses passos não forem executados.
 
-## 3. Commits sugeridos (não executados)
+## 3. Commits e rastreabilidade
 
 | Repositório | Arquivos | Mensagem sugerida |
 |---|---|---|
-| arena-ufrn | `backend/package.json`, `backend/tests/acceptance/quadras.qa.js`, `docs/qa/t2-us02-quadras.md` | `test: executa QA de aceitação da US02 e registra falhas` |
-| arena-ufrn | `docs/README.md`, `docs/estado_testes.md`, `docs/evidencias/t2-auditoria-sonarqube.md`, `docs/entrega-t2.md` | `docs: atualiza auditoria e pendências de entrega da T2` |
+| arena-ufrn | Runner e relatório histórico de QA | Já realizado: `a6d4fc4` |
+| arena-ufrn | Auditoria e documentação de entrega | Já realizado: `80509e2` |
+| arena-ufrn | Validações de quadras e testes de regressão | Próximo: `fix: corrige validações de quadras identificadas no QA` |
+| arena-ufrn | Documentação, links e reteste | Próximo: `docs: atualiza entrega da T2 com links reais e reteste` |
 | bsi-tasks | `softwaretesting/20262/README.md`, `softwaretesting/20262/tarefas/pauloandrehxh/README.md`, `softwaretesting/20262/tarefas/pauloandrehxh/tarefa02.md` | `docs: documenta implementação e QA da tarefa 02 #471` |
 
 Não usar #471 como issue do arena-ufrn: esse número pertence à disciplina.
@@ -52,27 +60,14 @@ fast-forward de upstream/main e incorporar as mudanças à task/471. A auditoria
 encontrou dois commits upstream ainda ausentes; não foi feita atualização automática.
 Se houver conflito, revisar e resolver sem reset ou force push.
 
-Publicar a branch do arena-ufrn e o novo relatório; só então copiar o link real do
-arquivo no GitHub. Abrir PR para main contendo implementação, testes, evidências
-e esse link. Não reutilizar o PR #9 ou #10 como se fossem o PR da US01 atual.
+O [relatório de QA já está publicado](https://github.com/pauloandrehxh/arena-ufrn/blob/feature/us01-reservas/docs/qa/t2-us02-quadras.md).
+Publicar as correções/reteste e abrir PR para main. Não reutilizar o PR #9 ou #10
+como se fossem o PR da US01 atual. A descrição final, sem campos vazios, está em
+[pr-t2.md](./pr-t2.md).
 
-Descrição sugerida do PR do projeto (preencher URLs reais após publicação):
-
-```markdown
-## T2 — US01: Reservar quadra
-- Validação de IDs, calendário, HH:mm e início futuro em America/Fortaleza.
-- Criação ATIVA com validação e conflito na mesma transação.
-- Unitários com mocks e integração com SQLite isolado.
-- Reexecução: 107 testes passando; cobertura global 73,91% statements/lines.
-
-## QA da US02 de Luis Felipe
-Relatório: <URL_REAL_DO_RELATORIO_PUBLICADO>
-Resultado: sete casos passaram e seis falharam; bugs reproduzidos e documentados.
-Alvo histórico: test/teste-de-quadras, 51f6c38, com schema atual explicitado.
-
-## SonarQube LABENS
-<RESULTADOS_E_EVIDENCIAS_REAIS_OU_BLOQUEIO_401_AINDA_PENDENTE>
-```
+O SonarQube desta entrega ainda não foi verificado. O PR dispara o workflow;
+consultar a análise autenticada no LABENS, corrigir problemas realmente apontados
+e atualizar as evidências antes de declarar conclusão.
 
 No bsi-tasks:
 

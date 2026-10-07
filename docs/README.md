@@ -15,9 +15,11 @@
 - [Plano Geral de Testes](./plano_teste.md): estratégia e critérios de conclusão.
 - [Evidência de execução atual](./evidencias/p1-execucao-testes-20261006.md).
 - [Evidência de desenvolvimento da T2 / US01](./evidencias/t2-us01-execucao-testes-20261006.md).
-- [Relatório de QA T2 / US02](./qa/t2-us02-quadras.md) — executado, com seis casos falhos.
+- [Relatório de QA T2 / US02](./qa/t2-us02-quadras.md) — seis falhas históricas; reteste da aplicação corrigida com 13 casos aprovados.
+- [Relatório de Luis Felipe sobre reservas](./qa/t2-us01-reservas.md) — publicado pelo colega; faltam resultados observados e evidências por caso.
 - [Auditoria posterior e bloqueio de autenticação LABENS](./evidencias/t2-auditoria-sonarqube.md).
 - [Pendências e roteiro de publicação manual da T2](./entrega-t2.md).
+- [Descrição preparada do PR da T2](./pr-t2.md).
 
 ## Checklist da P1
 
@@ -33,9 +35,11 @@ O enunciado é `softwaretesting/20262/tarefas/P1.md` no bsi-tasks. Os modelos de
 - [ ] Confirmar marco anterior à disciplina; a base inicial Git não é prova dessa data.
 - [ ] Confirmar datas absolutas do semestre, representante e políticas ainda pendentes.
 - [x] Atualizar README raiz com os novos links e contrato da US01 durante o desenvolvimento da T2.
-- [ ] Confirmar visibilidade pública do repositório e issue P1 na disciplina.
+- [x] Visibilidade pública do repositório confirmada por consulta aos arquivos no GitHub.
+- [ ] Confirmar issue P1 na disciplina.
 - [ ] Atualizar links no README da turma no bsi-tasks.
-- [ ] Realizar entregas/publicação com autorização; não houve commit, push ou merge nesta etapa.
+- [x] Publicar planejamento, implementação e QA histórico na branch `feature/us01-reservas`.
+- [ ] Concluir PRs e entregas finais na disciplina; branch publicada não equivale a entrega completa.
 
 Na entrega externa, cadastrar a issue com título **“P1 - Dados dos Projetos e Documentos Gerais - Grupo Arena UFRN”** no repositório da disciplina e registrar em `softwaretesting/20262/README.md` os links do repositório, visão, estado dos testes e plano da I1. Prazo do enunciado: **06/10/2026**. A existência dos arquivos locais não comprova entrega no prazo.
 
@@ -47,4 +51,4 @@ US01/US02 alimentam T2; US03/US04 alimentam T3. Paulo André desenvolve US01/US0
 
 O desenvolvimento inicial da T2 ocorre na branch local `feature/us01-reservas`, ainda sem issue de projeto identificada. O contrato temporal da US01 foi aprovado pelo usuário: America/Fortaleza, data YYYY-MM-DD, HH:mm e início no futuro. A issue individual da disciplina #471 foi confirmada por consulta pública; a entrega continua pendente.
 
-Não foi criado relatório de QA fictício. `docs/qa/` será usado após execução real. Evidências antigas são mantidas sem alteração; cobertura atual foi gerada fora do repositório para não sobrescrever relatórios anteriores.
+O QA real está em `docs/qa/t2-us02-quadras.md`, incluindo avaliação histórica e reteste separado após correções por Paulo. Evidências antigas são preservadas com o contexto original; cobertura foi gerada fora do repositório para não sobrescrever relatórios anteriores.
