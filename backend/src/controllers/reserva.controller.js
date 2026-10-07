@@ -6,7 +6,7 @@ export function createReservaController(reservaService) {
             const reservas = await reservaService.listarReservas();
 
             return res.status(200).json(reservas);
-        } catch (error) {
+        } catch {
             return res.status(500).json({
                 message: 'Erro ao listar reservas.',
             });
@@ -32,7 +32,7 @@ export function createReservaController(reservaService) {
             }
 
             return res.status(200).json(reserva);
-        } catch (error) {
+        } catch {
             return res.status(500).json({
                 message: 'Erro ao buscar reserva.',
             });
@@ -53,7 +53,7 @@ export function createReservaController(reservaService) {
                 await reservaService.buscarReservasPorUsuario(usuarioId);
 
             return res.status(200).json(reservas);
-        } catch (error) {
+        } catch {
             return res.status(500).json({
                 message: 'Erro ao buscar reservas do usuário.',
             });
@@ -74,7 +74,7 @@ export function createReservaController(reservaService) {
                 await reservaService.buscarReservasPorQuadra(quadraId);
 
             return res.status(200).json(reservas);
-        } catch (error) {
+        } catch {
             return res.status(500).json({
                 message: 'Erro ao buscar reservas da quadra.',
             });
@@ -184,7 +184,7 @@ export function createReservaController(reservaService) {
             await reservaService.deletarReserva(id);
 
             return res.status(204).send();
-        } catch (error) {
+        } catch {
             return res.status(500).json({
                 message: 'Erro ao remover reserva.',
             });

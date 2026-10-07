@@ -96,3 +96,26 @@ o [PR #11](https://github.com/pauloandrehxh/arena-ufrn/pull/11) de
 PR confirmou Backend CI em execução no
 [run 37553935374](https://github.com/pauloandrehxh/arena-ufrn/actions/runs/37553935374).
 Execução em andamento não comprova sucesso do scanner nem Quality Gate.
+
+## Integração da main após o merge do PR #10
+
+Com autorização do usuário, incorporou-se `origin/main` (`fa78f1b`, merge do
+PR #10 de Luis) à branch `feature/us01-reservas`. Os conflitos estavam em
+`reserva.service.js` e `reserva.controller.js`. Foram preservados o módulo novo
+de validação e a transação da US01, os catches sem variável onde ela não é usada
+e o CORS restrito a `http://localhost:5173`. As funções antigas movidas por Luis
+não foram duplicadas, pois o módulo novo já mantém a validação fora da factory.
+
+Validação antes de finalizar o merge:
+
+- `pnpm test:coverage --runInBand --coverageDirectory=/tmp/opencode/arena-ufrn-t2-merge-coverage`:
+  **134 testes passaram em sete suítes**. Global: **77,99% statements/lines,
+  71,25% branches e 90,32% functions**.
+- `pnpm qa:quadras`: **13 casos passaram, zero falhas**.
+- Verificação HTTP adicional com Supertest: origem `http://localhost:5173`
+  recebeu `Access-Control-Allow-Origin`; origem externa não autorizada não
+  recebeu esse cabeçalho. Ambos responderam 200 na rota raiz. CORS restringe
+  acesso do navegador, não equivale a autenticação ou bloqueio de requisições HTTP.
+
+Não foi feito merge do PR #11 na main; a atualização integra a main à branch
+de desenvolvimento para resolver os conflitos desse PR.
