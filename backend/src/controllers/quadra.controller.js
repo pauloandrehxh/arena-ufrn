@@ -1,13 +1,14 @@
 import { QuadraValidationError } from '../lib/quadra.validation.js';
 
-export function createQuadraController(quadraService) {
-    function responderErro(res, error, mensagem) {
-        if (error instanceof QuadraValidationError) {
-            return res.status(400).json({ message: error.message });
-        }
-
-        return res.status(500).json({ message: mensagem });
+function responderErro(res, error, mensagem) {
+    if (error instanceof QuadraValidationError) {
+        return res.status(400).json({ message: error.message });
     }
+
+    return res.status(500).json({ message: mensagem });
+}
+
+export function createQuadraController(quadraService) {
     async function listar(req, res) {
         try {
             const quadras = await quadraService.listarQuadras();

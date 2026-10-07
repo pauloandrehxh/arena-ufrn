@@ -185,7 +185,7 @@ export function createReservaService(prisma) {
             where: { id },
             data: {
                 ...data,
-                ...(data.date !== undefined ? { date: dadosAtualizados.date } : {}),
+                ...(data.date === undefined ? {} : { date: dadosAtualizados.date }),
             },
             include: {
                 usuario: true,
