@@ -1,15 +1,20 @@
+import { QuadraValidationError } from '../lib/quadra.validation.js';
+
 export function createQuadraController(quadraService) {
+    function responderErro(res, error, mensagem) {
+        if (error instanceof QuadraValidationError) {
+            return res.status(400).json({ message: error.message });
+        }
+
+        return res.status(500).json({ message: mensagem });
+    }
     async function listar(req, res) {
         try {
             const quadras = await quadraService.listarQuadras();
 
             return res.json(quadras);
         } catch (error) {
-            console.error('Erro ao buscar quadras:', error);
-
-            return res.status(500).json({
-                message: 'Erro ao buscar quadras.'
-            });
+            return responderErro(res, error, 'Erro ao buscar quadras.');
         }
     }
 
@@ -27,34 +32,26 @@ export function createQuadraController(quadraService) {
 
             return res.json(quadra);
         } catch (error) {
-            console.error('Erro ao buscar quadra:', error);
-
-            return res.status(500).json({
-                message: 'Erro ao buscar a quadra.'
-            });
+            return responderErro(res, error, 'Erro ao buscar a quadra.');
         }
     }
 
     async function criar(req, res) {
         try {
-            const { name } = req.body;
+            const { name } = req.body ?? {};
 
             const quadra = await quadraService.criarQuadra(name);
 
             return res.status(201).json(quadra);
         } catch (error) {
-            console.error('Erro ao criar quadra:', error);
-
-            return res.status(500).json({
-                message: 'Erro ao criar quadra.'
-            });
+            return responderErro(res, error, 'Erro ao criar quadra.');
         }
     }
 
     async function atualizar(req, res) {
         try {
             const id = Number(req.params.id);
-            const { name } = req.body;
+            const { name } = req.body ?? {};
 
             const quadra = await quadraService.atualizarQuadra(
                 id,
@@ -63,11 +60,7 @@ export function createQuadraController(quadraService) {
 
             return res.json(quadra);
         } catch (error) {
-            console.error('Erro ao atualizar quadra:', error);
-
-            return res.status(500).json({
-                message: 'Erro ao atualizar quadra.'
-            });
+            return responderErro(res, error, 'Erro ao atualizar quadra.');
         }
     }
 
@@ -79,11 +72,7 @@ export function createQuadraController(quadraService) {
 
             return res.status(204).send();
         } catch (error) {
-            console.error('Erro ao deletar quadra:', error);
-
-            return res.status(500).json({
-                message: 'Erro ao deletar quadra.'
-            });
+            return responderErro(res, error, 'Erro ao deletar quadra.');
         }
     }
 

@@ -25,6 +25,26 @@ beforeEach(() => {
 });
 
 describe('QuadraService', () => {
+  test.each(['', '   ', 123, null, undefined, [], {}])(
+    'rejeita nome inválido %p antes de gravar', async (name) => {
+      await expect(quadraService.criarQuadra(name)).rejects.toThrow('texto não vazio');
+      await expect(quadraService.atualizarQuadra(1, name)).rejects.toThrow('texto não vazio');
+      expect(prismaMock.quadra.create).not.toHaveBeenCalled();
+      expect(prismaMock.quadra.update).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([NaN, 0, -1, 1.5, '1', 2147483648])(
+    'rejeita ID inválido %p antes de acessar o banco', async (id) => {
+      await expect(quadraService.buscarQuadraPorId(id)).rejects.toThrow('inteiro positivo');
+      await expect(quadraService.atualizarQuadra(id, 'Quadra')).rejects.toThrow('inteiro positivo');
+      await expect(quadraService.deletarQuadra(id)).rejects.toThrow('inteiro positivo');
+      expect(prismaMock.quadra.findUnique).not.toHaveBeenCalled();
+      expect(prismaMock.quadra.update).not.toHaveBeenCalled();
+      expect(prismaMock.quadra.delete).not.toHaveBeenCalled();
+    }
+  );
+
   describe('listarQuadras', () => {
     test('deve retornar todas as quadras', async () => {
       const quadras = [
