@@ -1,6 +1,6 @@
 # Plano Geral de Testes — Arena UFRN
 
-**Revisão:** 06/10/2026 — versão 2.0
+**Versão:** 2.1 — complementação para a P2 (critérios e rastreabilidade).
 
 **Equipe:** Paulo André (@pauloandrehxh) e Luis Felipe (@Luisfelipelinhares)
 
@@ -19,7 +19,7 @@ Fora do escopo: infraestrutura física, LDAP/SSO institucional e e-mails reais. 
 | Unidade | Jest, service isolado, Prisma mockado, sucessos, erros e fronteiras | Existente para quadras, usuários e criação de reservas |
 | Integração de módulos | Supertest → Express → rotas → controller → service, Prisma mockado | Existente; não valida banco ou montagem de createApp |
 | Integração de persistência | Prisma e SQLite isolado, migrations/fixtures, verificações de integridade e concorrência | Implementado na branch US01: criação/conflito e concorrência no mesmo client; demais fluxos ainda pendentes |
-| Aceitação de API | Executar Gherkin contra implementação real em homologação; registrar entradas, saídas e Passou/Falhou | Planejado para I1/I2; não confundir com suites mockadas |
+| Sistema/aceitação de API | Executar cenários contra aplicação completa e persistência isolada; registrar entradas, saídas e Passou/Falhou | QA da US02 disponível; demais execuções devem ter evidência própria |
 | Componentes/E2E | Testar interfaces entregues, responsividade e navegadores | React Testing Library/Cypress eram previstos, mas não estão instalados/configurados |
 | Desempenho | Consultas de catálogo/disponibilidade sob protocolo definido para RNF05 | k6 é opção planejada, não ferramenta existente |
 
@@ -50,9 +50,39 @@ Meta RNF06: ao menos 80% em statements, branches, functions e lines dos services
 
 O [workflow](../.github/workflows/backend-ci.yaml) executa testes, cobertura e scanner; [sonar-project.properties](../sonar-project.properties) inclui backend e frontend e importa LCOV do backend.
 
-Antes de declarar conclusão: confirmar servidor LABENS, commit analisado, resultado do Quality Gate e problemas reais; corrigir e repetir a análise. Secrets, sucesso do workflow e resultados remotos ainda não foram comprovados neste trabalho. A branch de Luis Felipe citada no relatório deve ser analisada antes de duplicar correções. Mensagens Git não substituem evidências SonarQube.
+O [CI da main, run 37555641340](https://github.com/pauloandrehxh/arena-ufrn/actions/runs/37555641340), na revisão `3a5393ffbdf3fc292060276f5eae12e060c74a0c`, concluiu com sucesso: 134 testes passaram e o scanner registrou `ANALYSIS SUCCESSFUL` / `EXECUTION SUCCESS` no LABENS. Os tokens são referenciados por `secrets.SONAR_TOKEN` e `secrets.SONAR_HOST_URL`; não publicar seus valores. LCOV é gerado antes do scanner. [Dashboard](https://labens.dct.ufrn.br/sonarqube/dashboard?id=arena-ufrn).
+
+Para a P2, esse log comprova o envio bem-sucedido exigido. Não comprova aprovação do Quality Gate ou ausência de issues. Na avaliação de uma história, consultar resultados autenticados, corrigir problemas reais e repetir a análise. As correções de Luis do PR #10 já foram integradas e conciliadas com a US01; não duplicá-las. Mensagens Git não substituem evidências SonarQube.
 
 ## 6. QA e critério de conclusão
+
+### 6.1 Papéis e responsabilidades
+
+| Papel | Paulo André | Luis Felipe |
+|---|---|---|
+| Analista/desenvolvedor | US01 (I1), US03 (I2); especificação e automação correspondentes | US02 (I1), US04 (I2); especificação e automação correspondentes |
+| Testador/QA | Executar aceitação de US02/US04 e registrar defeitos/retestes | Executar aceitação de US01/US03 e registrar defeitos/retestes |
+| Gestão de evidências | Publicar revisão, comandos, cobertura e QA das histórias sob sua responsabilidade | Mesma responsabilidade para suas histórias |
+
+### 6.2 Critérios de entrada para execução
+
+1. História e critérios identificados no backlog; casos detalhados no PTI da iteração.
+2. Branch/commit alvo e contrato da operação definidos, sem usar commit de outra implementação como evidência.
+3. Dependências instaladas, Prisma Client gerado e aplicação executável em ambiente isolado; migrations aplicadas somente no banco exclusivo de teste.
+4. Fixtures sintéticas, estado inicial e limpeza entre casos definidos; relógio controlado para cenários temporais.
+5. Política necessária ao caso aprovada, incluindo janela/granularidade da US04; se ausente, marcar o caso bloqueado, não aprovado.
+6. Responsável e forma de coleta de resposta HTTP/estado persistido definidos. Falhas de entrada que façam parte do cenário não bloqueiam sua execução.
+
+### 6.3 Critérios de saída da execução/aceite
+
+1. Todos os casos aplicáveis da história executados e registrados com esperado/observado, Passou/Falhou e evidências; bloqueios justificados impedem declarar aceite integral.
+2. Unitários e integrações pertinentes passando na revisão entregue, incluindo regressões das correções; cobertura medida e confrontada com RNF06.
+3. Nenhum defeito impeditivo de aceitação em aberto; outros desvios documentados, com responsável e decisão de tratamento, sem ocultar casos falhos.
+4. Dados persistidos e ausência de efeitos indevidos verificados nos cenários de integridade; concorrência não é comprovada por mocks.
+5. QA cruzado e reteste de defeitos concluídos para declarar a história aceita. Relatório produzido pelo responsável real, sem aprovação condicionada tratada como execução.
+6. CI e envio ao LABENS comprovados com revisão e link. Aprovação do Quality Gate só pode ser declarada após verificação autenticada; não é exigência adicional de entrega documental da P2.
+
+### 6.4 Registro e rastreabilidade
 
 - Paulo André avalia histórias de Luis Felipe e vice-versa.
 - Identificar história, critérios, branch/commit e ambiente antes do QA.
@@ -73,3 +103,11 @@ Antes de declarar conclusão: confirmar servidor LABENS, commit analisado, resul
 | RNF06 | Reexecução dos scripts, isolamento e cobertura por service |
 
 Riscos e responsáveis estão centralizados na [visão](./visao.md), evitando tabelas divergentes.
+
+## 8. Planos específicos e evidências
+
+- [PTI da Iteração 1](./iteracoes/iteracao01.md): US01/US02, casos com IDs e campos de execução (seção 8).
+- [PTI da Iteração 2](./iteracoes/iteracao02.md): US03/US04, casos planejados, sem execução presumida (seção 5).
+- [Relatório de QA da US02](./qa/t2-us02-quadras.md) e [estado dos testes](./estado_testes.md): resultados reais, separados do planejamento.
+
+Riscos de execução: ausência de implementação/contrato bloqueia o caso afetado; uso de banco de desenvolvimento é proibido; indisponibilidade do LABENS impede nova comprovação de envio, devendo ser registrada sem fabricar resultados. A equipe mantém as mesmas ferramentas e fixtures da I1 na I2, adaptadas aos critérios de cada história.
