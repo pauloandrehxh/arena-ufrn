@@ -98,3 +98,11 @@ Na branch local `feature/us01-reservas`, sobre a base acima com alterações ain
 Agora existe integração de persistência com SQLite temporário e montagem real de createApp, incluindo um caso de requisições simultâneas no mesmo client. Isso atualiza o inventário anterior: o estado inicial da P1 permanece preservado nas seções acima, mas as afirmações de ausência de integração real não descrevem mais esta branch modificada.
 
 Detalhes e limites: [evidência T2](./evidencias/t2-us01-execucao-testes-20261006.md). QA da US02, SonarQube, múltiplas instâncias e políticas ainda pendentes não foram declarados concluídos.
+
+## 10. Auditoria posterior da T2
+
+Os commits da US01 foram encontrados publicados na branch `feature/us01-reservas`, em `da3f16a`. Reexecução: 107 testes passaram em sete suítes, com as mesmas métricas da seção 9. Essa execução não inclui o runner de QA separado.
+
+O [QA da US02](./qa/t2-us02-quadras.md) foi executado contra a contribuição histórica de Luis Felipe e repetido contra a aplicação atual: 13 casos, sete passaram e seis falharam. O relatório identifica quatro grupos de bugs e explicita o uso do schema atual. Não há aceite nem reteste após correção comprovado.
+
+As consultas ao LABENS confirmaram servidor UP e HTTP 401 nas APIs do projeto: [evidência de bloqueio](./evidencias/t2-auditoria-sonarqube.md). Sem autenticação não foi verificado Quality Gate nem inventado resultado da análise.

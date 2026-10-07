@@ -15,6 +15,9 @@
 - [Plano Geral de Testes](./plano_teste.md): estratégia e critérios de conclusão.
 - [Evidência de execução atual](./evidencias/p1-execucao-testes-20261006.md).
 - [Evidência de desenvolvimento da T2 / US01](./evidencias/t2-us01-execucao-testes-20261006.md).
+- [Relatório de QA T2 / US02](./qa/t2-us02-quadras.md) — executado, com seis casos falhos.
+- [Auditoria posterior e bloqueio de autenticação LABENS](./evidencias/t2-auditoria-sonarqube.md).
+- [Pendências e roteiro de publicação manual da T2](./entrega-t2.md).
 
 ## Checklist da P1
 
