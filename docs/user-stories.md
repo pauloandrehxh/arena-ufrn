@@ -52,14 +52,17 @@ Cada US agrupa requisitos internos com valor para um perfil, evitando histórias
 **Prioridade:** P0 | **RF:** RF03 | **Iteração:** I2  
 **Analista/Dev:** Paulo André | **QA:** Luis Felipe  
 **Dependências:** US01; contrato compartilhado com US04; US05 para autorização de titular.  
-**Base:** status existe; DELETE remove registro e não implementa este contrato.
+**Rastreabilidade:** [issue #14](https://github.com/pauloandrehxh/arena-ufrn/issues/14); branch local `feature/14-cancelamento-reservas`. Implementação inicial na T3, ainda sem aceite/PR.
 
 - CA01 (P0): cancelar reserva ATIVA e futura, mudando para CANCELADA sem excluir ID, usuário, quadra ou intervalo.
 - CA02 (P0): reserva CANCELADA não bloqueia novo agendamento nem disponibilidade.
 - CA03 (P0): repetir cancelamento de CANCELADA é idempotente; inexistente retorna 404.
 - CA04 (P0): não cancelar reserva CONCLUIDA ou já iniciada; falha preserva registro.
 - CA05 (P0 após US05): somente titular ou gestor autorizado pode cancelar.
-- CA06 (P0): definir fuso/relógio e resposta HTTP da transição antes de implementar; testes devem controlar tempo. Os exemplos abaixo usam uma data futura inequívoca.
+- CA06 (P0): usar America/Fortaleza e relógio controlável, com início estritamente futuro. PATCH `/api/reservas/:id/cancelamento` retorna 200 com a reserva; DELETE `/api/reservas/:id` delega à mesma operação e retorna 204, sem apagar o registro. ID inválido retorna 400; inexistente 404; CONCLUIDA ou início alcançado 409; falha inesperada 500 genérico. CANCELADA é idempotente mesmo após o horário passar. Contrato aprovado pelo usuário em 08/10/2026.
+- CA07 (P0): PUT não aceita status, ID, createdAt ou objetos de relacionamento; não modifica CANCELADA/CONCLUIDA nem move uma reserva já iniciada para contornar o cancelamento. Mudança concorrente de estado não pode reativar uma reserva.
+
+**Limite:** não existe autenticação de titular nesta I2; CA05 depende de US05. Identificador fornecido na URL não autentica usuário. Usar somente homologação restrita. Cancelamento e criação foram exercitados no mesmo client; isso não comprova concorrência distribuída nem implementação da disponibilidade US04.
 
 ### US04 — Consultar disponibilidade
 
@@ -264,7 +267,7 @@ Funcionalidade: Manter catálogo de quadras em homologação
     Então não informa sucesso nem expõe detalhes internos da dependência
 ```
 
-### US03 (CA01–CA04)
+### US03 (CA01–CA04, CA06–CA07)
 
 ```gherkin
 Funcionalidade: Cancelar reserva
@@ -286,8 +289,51 @@ Funcionalidade: Cancelar reserva
     Exemplos:
       | condicao                         | resultado                     |
       | a reserva não existe             | a API responde 404            |
-      | a reserva está CONCLUIDA          | a operação é rejeitada        |
-      | a reserva já iniciou             | a operação é rejeitada        |
+      | a reserva está CONCLUIDA          | a API responde 409            |
+      | a reserva já iniciou             | a API responde 409            |
+
+  Cenário: Preservar histórico pelo endpoint legado
+    Dado que existe uma reserva ATIVA futura
+    Quando solicito DELETE pelo identificador da reserva
+    Então a API responde 204 e mantém o registro com estado CANCELADA
+    E repetir DELETE mantém o mesmo registro
+
+  Cenário: Rejeitar entrada inválida
+    Dado que a aplicação está disponível em homologação restrita
+    Quando solicito cancelamento com ID não inteiro positivo
+    Então a API responde 400 sem alterar registros
+
+  Cenário: Usar o dia local na fronteira UTC
+    Dado que são 10/10/2099 às 02:30 UTC e 09/10/2099 às 23:30 em Fortaleza
+    E existe reserva ATIVA em 09/10/2099 das 23:45 às 23:59
+    Quando solicito seu cancelamento
+    Então a API responde 200 com o mesmo registro CANCELADA
+
+  Cenário: Rejeitar cancelamento no início exato
+    Dado que existe reserva ATIVA às 14:00 e o relógio marca 14:00 em Fortaleza
+    Quando solicito seu cancelamento
+    Então a API responde 409 e preserva a reserva ATIVA
+
+  Cenário: Preservar reserva quando a gravação falha
+    Dado que existe reserva ATIVA futura e a persistência de atualização falha
+    Quando solicito seu cancelamento
+    Então a API responde 500 sem expor detalhes internos
+    E a reserva continua ATIVA e bloqueando o intervalo
+
+  Cenário: Impedir alteração direta de estado pelo PUT
+    Dado que existe uma reserva cadastrada
+    Quando tento definir seu status pelo PUT
+    Então a API responde 400 e mantém os dados anteriores
+
+  Cenário: Impedir mudança de dados de reserva cancelada
+    Dado que existe uma reserva CANCELADA
+    Quando tento alterar sua data ou horário pelo PUT
+    Então a API responde 409 e mantém seu histórico
+
+  Cenário: Impedir reagendamento de reserva já iniciada como atalho para cancelar
+    Dado que existe reserva ATIVA cujo início já foi alcançado
+    Quando tento mover sua data para o futuro pelo PUT
+    Então a API responde 409 e mantém os dados anteriores
 ```
 
 ### US04 (CA01–CA04)

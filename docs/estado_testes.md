@@ -116,3 +116,22 @@ O runner de QA separado passou **13 casos, zero falhas**. Os resultados históri
 da contribuição de Luis foram preservados, não substituídos por uma aprovação
 retroativa. Detalhes: [relatório QA](./qa/t2-us02-quadras.md) e
 [evidência do reteste](./evidencias/t2-auditoria-sonarqube.md).
+
+## 12. Desenvolvimento inicial da T3 / US03
+
+Na branch local `feature/14-cancelamento-reservas`, sobre `87d8b79` com alterações
+ainda não commitadas, passaram **185 testes em nove suítes**. Cobertura global:
+81,08% statements, 81,03% lines, 74,71% branches e 91,54% functions. Service de
+reservas: 100% statements/lines/functions e 97,67% branches. Foram exercitados
+cancelamento lógico, preservação/liberação, idempotência, fronteiras temporais,
+falha real de UPDATE e concorrência no mesmo client. Não há SonarQube, QA da US04
+nem QA independente de Luis comprovados para essa revisão.
+
+Comandos, limites e evidência: [T3 / US03](./evidencias/t3-us03-testes-20261008.md).
+
+Revisão local de 09/10/2026: **192 testes passaram em nove suítes**, após
+acrescentar regressões do PUT e eliminar leitura redundante no controller.
+Cobertura global final: **80,92% statements, 80,86% lines, 74,86% branches e
+91,54% functions**; service de reservas mantém 100% statements/lines/functions
+e 97,67% branches. Resultados anteriores permanecem como histórico da execução
+de 08/10; a evidência acima contém a transcrição final.
