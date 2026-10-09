@@ -355,7 +355,7 @@ describe('Integração - API de reservas', () => {
         test('retorna 400 para horário inválido sem atualizar reserva', async () => {
             prismaMock.reserva.findUnique.mockResolvedValue({
                 id: 1, usuarioId: 1, quadraId: 1, date: new Date('2099-10-10'),
-                startTime: '14:00', endTime: '15:00',
+                startTime: '14:00', endTime: '15:00', status: 'ATIVA',
             });
             const response = await request(app).put('/api/reservas/1').send({ startTime: '24:00' });
             expect(response.status).toBe(400);
@@ -365,6 +365,7 @@ describe('Integração - API de reservas', () => {
         test('deve atualizar uma reserva', async () => {
             const reservaExistente = {
                 id: 1,
+                status: 'ATIVA',
                 usuarioId: 1,
                 quadraId: 1,
                 date: new Date('2099-10-10'),
@@ -438,30 +439,33 @@ describe('Integração - API de reservas', () => {
     });
 
     describe('DELETE /api/reservas/:id', () => {
-        test('deve deletar uma reserva', async () => {
+        test('deve cancelar logicamente pelo DELETE, sem apagar registro', async () => {
             const reserva = {
                 id: 1,
                 usuarioId: 1,
                 quadraId: 1,
+                status: 'ATIVA', date: new Date('2099-10-10'), startTime: '14:00', endTime: '15:00',
             };
 
             prismaMock.reserva.findUnique
                 .mockResolvedValue(reserva);
 
-            prismaMock.reserva.delete
-                .mockResolvedValue(reserva);
+            prismaMock.reserva.update.mockResolvedValue({ ...reserva, status: 'CANCELADA' });
 
             const response = await request(app)
                 .delete('/api/reservas/1');
 
             expect(response.status).toBe(204);
 
-            expect(prismaMock.reserva.delete)
+            expect(prismaMock.reserva.update)
                 .toHaveBeenCalledWith({
                     where: {
-                        id: 1,
+                        id: 1, status: 'ATIVA', date: reserva.date, startTime: reserva.startTime,
                     },
+                    data: { status: 'CANCELADA' },
+                    include: { usuario: true, quadra: true },
                 });
+            expect(prismaMock.reserva.delete).not.toHaveBeenCalled();
         });
 
         test('deve retornar 404 ao tentar deletar reserva inexistente', async () => {
@@ -488,7 +492,7 @@ describe('Integração - API de reservas', () => {
             expect(response.status).toBe(400);
 
             expect(response.body).toEqual({
-                message: 'ID inválido.',
+                message: 'ID da reserva deve ser um inteiro positivo válido.',
             });
         });
     });
