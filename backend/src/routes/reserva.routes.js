@@ -15,6 +15,8 @@ export function createReservaRoutes(reservaController) {
 
     router.put('/:id', reservaController.atualizar);
 
+    router.patch('/:id/cancelamento', reservaController.cancelar);
+
     router.delete('/:id', reservaController.deletar);
 
     return router;

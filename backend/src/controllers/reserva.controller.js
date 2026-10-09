@@ -1,4 +1,19 @@
-import { ReservaValidationError, normalizarDataReserva } from '../lib/reserva.validation.js';
+import {
+    ReservaValidationError, ReservaNotFoundError, ReservaConflictError, normalizarDataReserva,
+} from '../lib/reserva.validation.js';
+
+function responderErroOperacao(res, error, mensagem) {
+    if (error instanceof ReservaValidationError) {
+        return res.status(400).json({ message: error.message });
+    }
+    if (error instanceof ReservaNotFoundError) {
+        return res.status(404).json({ message: error.message });
+    }
+    if (error instanceof ReservaConflictError) {
+        return res.status(409).json({ message: error.message });
+    }
+    return res.status(500).json({ message: mensagem });
+}
 
 export function createReservaController(reservaService) {
     async function listar(req, res) {
@@ -128,22 +143,13 @@ export function createReservaController(reservaService) {
     async function atualizar(req, res) {
         const id = Number(req.params.id);
 
-        if (!Number.isInteger(id)) {
+        if (!Number.isInteger(id) || id <= 0 || id > 2147483647) {
             return res.status(400).json({
                 message: 'ID inválido.',
             });
         }
 
         try {
-            const reservaExistente =
-                await reservaService.buscarReservaPorId(id);
-
-            if (!reservaExistente) {
-                return res.status(404).json({
-                    message: 'Reserva não encontrada.',
-                });
-            }
-
             const dados = { ...req.body };
 
             if (dados.date) {
@@ -155,39 +161,25 @@ export function createReservaController(reservaService) {
 
             return res.status(200).json(reserva);
         } catch (error) {
-            const validacao = error instanceof ReservaValidationError;
+            return responderErroOperacao(res, error, 'Erro ao atualizar reserva.');
+        }
+    }
 
-            return res.status(validacao ? 400 : 500).json({
-                message: validacao ? error.message : 'Erro ao atualizar reserva.',
-            });
+    async function cancelar(req, res) {
+        try {
+            const reserva = await reservaService.cancelarReserva(Number(req.params.id));
+            return res.status(200).json(reserva);
+        } catch (error) {
+            return responderErroOperacao(res, error, 'Erro ao cancelar reserva.');
         }
     }
 
     async function deletar(req, res) {
-        const id = Number(req.params.id);
-
-        if (!Number.isInteger(id)) {
-            return res.status(400).json({
-                message: 'ID inválido.',
-            });
-        }
-
         try {
-            const reserva = await reservaService.buscarReservaPorId(id);
-
-            if (!reserva) {
-                return res.status(404).json({
-                    message: 'Reserva não encontrada.',
-                });
-            }
-
-            await reservaService.deletarReserva(id);
-
+            await reservaService.cancelarReserva(Number(req.params.id));
             return res.status(204).send();
-        } catch {
-            return res.status(500).json({
-                message: 'Erro ao remover reserva.',
-            });
+        } catch (error) {
+            return responderErroOperacao(res, error, 'Erro ao cancelar reserva.');
         }
     }
 
@@ -198,6 +190,7 @@ export function createReservaController(reservaService) {
         listarPorQuadra,
         criar,
         atualizar,
+        cancelar,
         deletar
     };
 }

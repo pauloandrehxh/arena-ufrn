@@ -5,6 +5,20 @@ export class ReservaValidationError extends Error {
     }
 }
 
+export class ReservaNotFoundError extends Error {
+    constructor() {
+        super('Reserva não encontrada.');
+        this.name = 'ReservaNotFoundError';
+    }
+}
+
+export class ReservaConflictError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ReservaConflictError';
+    }
+}
+
 export function validarIdReserva(value, campo) {
     if (!Number.isInteger(value) || value <= 0 || value > 2147483647) {
         throw new ReservaValidationError(`${campo} deve ser um inteiro positivo válido.`);
@@ -56,18 +70,30 @@ const relogioFortaleza = new Intl.DateTimeFormat('en-GB', {
     hourCycle: 'h23',
 });
 
-export function validarDataFuturaReserva(date, startTime, agora = new Date()) {
+function obterDataHoraFortaleza(agora) {
     const partes = Object.fromEntries(
         relogioFortaleza.formatToParts(agora).map(({ type, value }) => [type, value])
     );
-    const hoje = `${partes.year}-${partes.month}-${partes.day}`;
+    return {
+        date: `${partes.year}-${partes.month}-${partes.day}`,
+        time: `${partes.hour}:${partes.minute}`,
+    };
+}
+
+export function inicioReservaNoFuturo(date, startTime, agora = new Date()) {
+    const atual = obterDataHoraFortaleza(agora);
+    return `${date.toISOString().slice(0, 10)}T${startTime}` > `${atual.date}T${atual.time}`;
+}
+
+export function validarDataFuturaReserva(date, startTime, agora = new Date()) {
+    const atual = obterDataHoraFortaleza(agora);
     const dia = date.toISOString().slice(0, 10);
 
-    if (dia < hoje) {
+    if (dia < atual.date) {
         throw new ReservaValidationError('Não é possível criar uma reserva no passado.');
     }
 
-    if (dia === hoje && startTime <= `${partes.hour}:${partes.minute}`) {
+    if (dia === atual.date && startTime <= atual.time) {
         throw new ReservaValidationError('O horário inicial deve estar no futuro.');
     }
 }

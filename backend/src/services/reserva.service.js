@@ -1,12 +1,15 @@
 import {
     ReservaValidationError,
+    ReservaNotFoundError,
+    ReservaConflictError,
+    inicioReservaNoFuturo,
     normalizarDataReserva,
     validarIdReserva,
     validarHorariosReserva,
     validarDataFuturaReserva,
 } from '../lib/reserva.validation.js';
 
-export function createReservaService(prisma) {
+export function createReservaService(prisma, { agora = () => new Date() } = {}) {
     async function validarUsuario(usuarioId, banco = prisma) {
         const usuario = await banco.usuario.findUnique({
             where: { id: usuarioId },
@@ -103,7 +106,7 @@ export function createReservaService(prisma) {
         validarIdReserva(data.quadraId, 'quadraId');
         const date = normalizarDataReserva(data.date);
         validarHorariosReserva(data.startTime, data.endTime);
-        validarDataFuturaReserva(date, data.startTime);
+        validarDataFuturaReserva(date, data.startTime, agora());
 
         const dados = {
             usuarioId: data.usuarioId,
@@ -130,12 +133,25 @@ export function createReservaService(prisma) {
     }
 
     async function atualizarReserva(id, data) {
+        validarIdReserva(id, 'ID da reserva');
+        const camposPermitidos = ['usuarioId', 'quadraId', 'date', 'startTime', 'endTime'];
+        if (Object.keys(data).some((campo) => !camposPermitidos.includes(campo))) {
+            throw new ReservaValidationError('Somente usuário, quadra, data e horários podem ser atualizados. Use a operação de cancelamento para alterar o estado.');
+        }
+
         const reservaAtual = await prisma.reserva.findUnique({
             where: { id },
         });
 
         if (!reservaAtual) {
-            throw new Error('Reserva não encontrada.');
+            throw new ReservaNotFoundError();
+        }
+
+        if (reservaAtual.status !== 'ATIVA') {
+            throw new ReservaConflictError('Somente reservas ATIVA podem ser atualizadas.');
+        }
+        if (!inicioReservaNoFuturo(reservaAtual.date, reservaAtual.startTime, agora())) {
+            throw new ReservaConflictError('Não é possível atualizar uma reserva já iniciada.');
         }
 
         const dadosAtualizados = {
@@ -143,11 +159,13 @@ export function createReservaService(prisma) {
             ...data,
         };
 
-        if (data.usuarioId) {
+        if (data.usuarioId !== undefined) {
+            validarIdReserva(data.usuarioId, 'usuarioId');
             await validarUsuario(data.usuarioId);
         }
 
-        if (data.quadraId) {
+        if (data.quadraId !== undefined) {
+            validarIdReserva(data.quadraId, 'quadraId');
             await validarQuadra(data.quadraId);
         }
 
@@ -156,7 +174,7 @@ export function createReservaService(prisma) {
             dadosAtualizados.startTime,
             dadosAtualizados.endTime
         );
-        validarDataFuturaReserva(dadosAtualizados.date, dadosAtualizados.startTime);
+        validarDataFuturaReserva(dadosAtualizados.date, dadosAtualizados.startTime, agora());
 
         const conflito = await prisma.reserva.findFirst({
             where: {
@@ -181,30 +199,62 @@ export function createReservaService(prisma) {
             );
         }
 
-        return prisma.reserva.update({
-            where: { id },
-            data: {
-                ...data,
-                ...(data.date === undefined ? {} : { date: dadosAtualizados.date }),
-            },
-            include: {
-                usuario: true,
-                quadra: true,
-            },
-        });
+        try {
+            return await prisma.reserva.update({
+                where: { id, status: 'ATIVA' },
+                data: {
+                    ...data,
+                    ...(data.date === undefined ? {} : { date: dadosAtualizados.date }),
+                },
+                include: {
+                    usuario: true,
+                    quadra: true,
+                },
+            });
+        } catch (error) {
+            if (error.code === 'P2025') {
+                throw new ReservaConflictError('A reserva foi alterada durante a atualização.');
+            }
+            throw error;
+        }
     }
 
-    async function deletarReserva(id) {
-        const reserva = await prisma.reserva.findUnique({
-            where: { id },
-        });
+    async function cancelarReserva(id) {
+        validarIdReserva(id, 'ID da reserva');
 
-        if (!reserva) {
-            throw new Error('Reserva não encontrada.');
-        }
+        return prisma.$transaction(async (banco) => {
+            const reserva = await banco.reserva.findUnique({
+                where: { id },
+                include: { usuario: true, quadra: true },
+            });
 
-        return prisma.reserva.delete({
-            where: { id },
+            if (!reserva) {
+                throw new ReservaNotFoundError();
+            }
+            if (reserva.status === 'CANCELADA') {
+                return reserva;
+            }
+            if (reserva.status !== 'ATIVA') {
+                throw new ReservaConflictError('Somente reservas ATIVA podem ser canceladas.');
+            }
+            if (!inicioReservaNoFuturo(reserva.date, reserva.startTime, agora())) {
+                throw new ReservaConflictError('Não é possível cancelar uma reserva já iniciada.');
+            }
+
+            try {
+                return await banco.reserva.update({
+                    where: {
+                        id, status: 'ATIVA', date: reserva.date, startTime: reserva.startTime,
+                    },
+                    data: { status: 'CANCELADA' },
+                    include: { usuario: true, quadra: true },
+                });
+            } catch (error) {
+                if (error.code === 'P2025') {
+                    throw new ReservaConflictError('A reserva foi alterada durante o cancelamento.');
+                }
+                throw error;
+            }
         });
     }
 
@@ -215,6 +265,7 @@ export function createReservaService(prisma) {
         buscarReservasPorQuadra,
         criarReserva,
         atualizarReserva,
-        deletarReserva
+        cancelarReserva,
+        deletarReserva: cancelarReserva
     };
 }
