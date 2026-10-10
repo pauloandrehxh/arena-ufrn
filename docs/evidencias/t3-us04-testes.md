@@ -1,5 +1,3 @@
-Aqui está o conteúdo em Markdown (`.md`), pronto para copiar e salvar como `evidencias_us04.md`.
-
 # Evidências de Testes — US04: Consultar Disponibilidade
 
 ## 1. Objetivo
