@@ -232,7 +232,8 @@ Exemplo de resposta:
 | GET | `/api/reservas/usuario/:usuarioId` | Lista por usuário |
 | GET | `/api/reservas/quadra/:quadraId` | Lista por quadra |
 | PUT | `/api/reservas/:id` | Atualiza dados da reserva |
-| DELETE | `/api/reservas/:id` | Exclui registro; não equivale ao cancelamento lógico planejado na US03 |
+| PATCH | `/api/reservas/:id/cancelamento` | Cancela logicamente e retorna a reserva (200) |
+| DELETE | `/api/reservas/:id` | Cancela logicamente e retorna 204; preserva o histórico |
 
 Contrato da criação (US01): `usuarioId`/`quadraId` são inteiros JSON positivos;
 `date` é `YYYY-MM-DD`; `startTime`/`endTime` são `HH:mm` válidos. Os horários são
@@ -254,6 +255,12 @@ sem detalhes internos. Não há autenticação: usar apenas homologação restri
 ```
 
 O exemplo usa uma data futura de teste, não uma reserva real.
+
+Contrato de cancelamento (US03): apenas ATIVA com início futuro pode passar a
+CANCELADA. Repetir cancelamento é idempotente, inclusive após o horário passar.
+ID inválido retorna 400, inexistente 404, CONCLUIDA/já iniciada 409 e falha interna
+500 genérico. PUT rejeita mudanças de estado/campos internos (400) e alterações
+de CANCELADA/CONCLUIDA ou reserva já iniciada (409). DELETE não apaga mais registros.
 
 ## Executando o projeto
 
@@ -484,10 +491,10 @@ As próximas etapas planejadas para o Arena UFRN incluem:
 
 ### Reservas
 
-O backend já cria, consulta, atualiza e exclui reservas, com relacionamentos e
+O backend já cria, consulta, atualiza e cancela reservas, com relacionamentos e
 validações de data/horário/conflito. Permanecem como evolução:
 
-* cancelamento lógico preservando histórico (US03);
+* autenticação de titular para cancelamento (dependência US05);
 * cálculo de disponibilidade (US04);
 * regras de uso equitativo e reagendamento seguro;
 * verificação de concorrência entre múltiplas instâncias da aplicação.

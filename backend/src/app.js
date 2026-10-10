@@ -13,7 +13,7 @@ import { createReservaService } from './services/reserva.service.js';
 import { createReservaController } from './controllers/reserva.controller.js';
 import { createReservaRoutes } from './routes/reserva.routes.js';
 
-export function createApp(prisma) {
+export function createApp(prisma, { agora } = {}) {
     const app = express();
 
     const allowedOrigins = [
@@ -58,7 +58,7 @@ export function createApp(prisma) {
     app.use('/api/usuarios', usuarioRoutes);
 
     // Reservas
-    const reservaService = createReservaService(prisma);
+    const reservaService = createReservaService(prisma, { agora });
 
     const reservaController = createReservaController(reservaService);
 

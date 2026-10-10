@@ -60,7 +60,7 @@ P0 = essencial; P1 = importante; P2 = evolução desejável. Os estados abaixo d
 |---|---|---|---|---|
 | RF01 | Criar reserva para usuário e quadra ativos em intervalo válido e sem sobreposição | P0 | US01 | Parcial: backend existente, validações a completar |
 | RF02 | Cadastrar, listar, consultar e atualizar quadras | P0 | US02 | Backend existente; validações e aceite a completar |
-| RF03 | Cancelar reserva preservando registro e liberando o intervalo | P0 | US03 | Pendente; DELETE atual remove o registro |
+| RF03 | Cancelar reserva preservando registro e liberando o intervalo | P0 | US03 | Implementação inicial na branch T3; PATCH/DELETE preservam histórico; QA/aceite pendentes |
 | RF04 | Consultar disponibilidade de uma quadra por data | P0 | US04 | Pendente; listagem de reservas não calcula disponibilidade |
 | RF05 | Autenticar usuário e encerrar sua sessão | P0 | US05 | Pendente |
 | RF06 | Manter usuários com e-mail/matrícula únicos e controlar sua situação ativa | P0 | US06 | CRUD existente; autorização e aceite pendentes |

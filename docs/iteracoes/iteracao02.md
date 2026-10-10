@@ -18,6 +18,7 @@ Critérios e Gherkin estão no [backlog](../user-stories.md), não duplicados aq
 
 - Dependências: US01/US02, dados de homologação e contrato de datas/horários.
 - Cancelamento deve preservar registro e liberar intervalo; DELETE existente não representa US03.
+- Na branch da T3 de Paulo, o contrato aprovado passa a delegar DELETE ao cancelamento lógico (204); PATCH específico retorna 200. O registro histórico da base anterior não descreve mais essa árvore modificada.
 - Somente ATIVA ocupa intervalo; consultas de conflito e disponibilidade precisam concordar.
 - Cancelamento repetido é idempotente; concluídas/já iniciadas não são canceláveis.
 - Definir fuso, respostas HTTP, janela de funcionamento e granularidade antes do aceite.
@@ -111,3 +112,25 @@ DELETE físico destrói o histórico; fuso divergente muda elegibilidade de
 cancelamento; política W/G indefinida produz disponibilidade arbitrária.
 Mitigar com fixtures temporais, consultas de banco e bloqueio explícito de casos
 sem contrato. Não duplicar como resultado os cenários apenas planejados aqui.
+
+## 6. Desenvolvimento inicial da T3 — US03
+
+Em 08/10/2026 foi criada a [issue #14](https://github.com/pauloandrehxh/arena-ufrn/issues/14)
+e a branch local `feature/14-cancelamento-reservas`, sobre `87d8b79`.
+O contrato está no backlog. Foram implementados cancelamento lógico transacional,
+idempotência, validação temporal e proteção do PUT, sem implementar a US04 de Luis.
+
+A execução conjunta passou **185 testes em nove suítes**, com SQLite temporário
+e relógio injetado. Testes de persistência exercitaram os comportamentos de
+I2-CT01–CT07; isso não representa QA independente de Luis nem resultado para
+CT08–CT16. Os testes de concorrência usam o mesmo client. CT08 depende de US05;
+CT09–CT16 dependem da implementação/contrato da US04. Ver
+[evidência inicial T3](../evidencias/t3-us03-testes-20261008.md).
+
+QA da US04, QA de Luis sobre a US03, SonarQube da revisão, commits e PRs da T3
+continuam pendentes. A issue individual de Paulo na disciplina é
+[#498](https://github.com/tacianosilva/bsi-tasks/issues/498).
+
+A revisão final local de 09/10/2026 passou **192 testes em nove suítes**,
+incluindo regressões adicionais de IDs/campos internos no PUT. Implementação
+local da US03 concluída; conclusão da tarefa ainda depende das pendências acima.
