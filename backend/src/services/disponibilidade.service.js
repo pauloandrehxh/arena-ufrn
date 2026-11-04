@@ -1,62 +1,67 @@
 
 import { HORARIO_FUNCIONAMENTO } from '../lib/disponibilidade.config.js';
 
+function validarData(data) {
+    if (
+        typeof data !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(data)
+    ) {
+        throw new Error('Data inválida. Use o formato AAAA-MM-DD.');
+    }
+
+    const dataObj = new Date(`${data}T00:00:00.000Z`);
+
+    if (
+        Number.isNaN(dataObj.getTime()) ||
+        dataObj.toISOString().slice(0, 10) !== data
+    ) {
+        throw new Error('Data inválida. Informe uma data existente.');
+    }
+
+    return dataObj;
+}
+
+function formatarHorario(valor) {
+    const horas = String(Math.floor(valor / 60)).padStart(2, '0');
+    const minutos = String(valor % 60).padStart(2, '0');
+
+    return `${horas}:${minutos}`;
+}
+
+function gerarIntervalos() {
+    const { inicio, fim, duracaoMinutos } = HORARIO_FUNCIONAMENTO;
+
+    const [ih, im] = inicio.split(':').map(Number);
+    const [fh, fm] = fim.split(':').map(Number);
+
+    const inicioMinutos = ih * 60 + im;
+    const fimMinutos = fh * 60 + fm;
+
+    if (
+        !Number.isInteger(duracaoMinutos) ||
+        duracaoMinutos <= 0 ||
+        inicioMinutos >= fimMinutos
+    ) {
+        throw new Error('Configuração de funcionamento inválida.');
+    }
+
+    const intervalos = [];
+
+    for (
+        let minuto = inicioMinutos;
+        minuto + duracaoMinutos <= fimMinutos;
+        minuto += duracaoMinutos
+    ) {
+        intervalos.push({
+            startTime: formatarHorario(minuto),
+            endTime: formatarHorario(minuto + duracaoMinutos),
+        });
+    }
+
+    return intervalos;
+}
+
 export function createDisponibilidadeService(prisma) {
-    function validarData(data) {
-        if (
-            typeof data !== 'string' ||
-            !/^\d{4}-\d{2}-\d{2}$/.test(data)
-        ) {
-            throw new Error('Data inválida. Use o formato AAAA-MM-DD.');
-        }
-
-        const dataObj = new Date(`${data}T00:00:00.000Z`);
-
-        if (
-            Number.isNaN(dataObj.getTime()) ||
-            dataObj.toISOString().slice(0, 10) !== data
-        ) {
-            throw new Error('Data inválida. Informe uma data existente.');
-        }
-
-        return dataObj;
-    }
-
-    function gerarIntervalos() {
-        const { inicio, fim, duracaoMinutos } = HORARIO_FUNCIONAMENTO;
-        const [ih, im] = inicio.split(':').map(Number);
-        const [fh, fm] = fim.split(':').map(Number);
-
-        const inicioMinutos = ih * 60 + im;
-        const fimMinutos = fh * 60 + fm;
-
-        if (
-            !Number.isInteger(duracaoMinutos) ||
-            duracaoMinutos <= 0 ||
-            inicioMinutos >= fimMinutos
-        ) {
-            throw new Error('Configuração de funcionamento inválida.');
-        }
-
-        const intervalos = [];
-
-        const formatar = (valor) =>
-            `${String(Math.floor(valor / 60)).padStart(2, '0')}:${String(valor % 60).padStart(2, '0')}`;
-
-        for (
-            let minuto = inicioMinutos;
-            minuto + duracaoMinutos <= fimMinutos;
-            minuto += duracaoMinutos
-        ) {
-            intervalos.push({
-                startTime: formatar(minuto),
-                endTime: formatar(minuto + duracaoMinutos),
-            });
-        }
-
-        return intervalos;
-    }
-
     async function consultar({ quadraId, date }) {
         if (
             quadraId === undefined ||
@@ -110,7 +115,9 @@ export function createDisponibilidadeService(prisma) {
             status: reserva.status,
         }));
 
-        const disponiveis = gerarIntervalos().filter((intervalo) =>
+        const intervalos = gerarIntervalos();
+
+        const disponiveis = intervalos.filter((intervalo) =>
             !reservas.some((reserva) =>
                 reserva.startTime < intervalo.endTime &&
                 intervalo.startTime < reserva.endTime
