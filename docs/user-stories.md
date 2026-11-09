@@ -52,7 +52,7 @@ Cada US agrupa requisitos internos com valor para um perfil, evitando histórias
 **Prioridade:** P0 | **RF:** RF03 | **Iteração:** I2  
 **Analista/Dev:** Paulo André | **QA:** Luis Felipe  
 **Dependências:** US01; contrato compartilhado com US04; US05 para autorização de titular.  
-**Rastreabilidade:** [issue #14](https://github.com/pauloandrehxh/arena-ufrn/issues/14); branch local `feature/14-cancelamento-reservas`. Implementação inicial na T3, ainda sem aceite/PR.
+**Rastreabilidade:** [issue #14](https://github.com/pauloandrehxh/arena-ufrn/issues/14); [PR #15 integrado à main](https://github.com/pauloandrehxh/arena-ufrn/pull/15). O relatório de Luis na `main` é um modelo condicionado à confirmação prática, não aceite independente comprovado.
 
 - CA01 (P0): cancelar reserva ATIVA e futura, mudando para CANCELADA sem excluir ID, usuário, quadra ou intervalo.
 - CA02 (P0): reserva CANCELADA não bloqueia novo agendamento nem disponibilidade.
@@ -62,7 +62,7 @@ Cada US agrupa requisitos internos com valor para um perfil, evitando histórias
 - CA06 (P0): usar America/Fortaleza e relógio controlável, com início estritamente futuro. PATCH `/api/reservas/:id/cancelamento` retorna 200 com a reserva; DELETE `/api/reservas/:id` delega à mesma operação e retorna 204, sem apagar o registro. ID inválido retorna 400; inexistente 404; CONCLUIDA ou início alcançado 409; falha inesperada 500 genérico. CANCELADA é idempotente mesmo após o horário passar. Contrato aprovado pelo usuário em 08/10/2026.
 - CA07 (P0): PUT não aceita status, ID, createdAt ou objetos de relacionamento; não modifica CANCELADA/CONCLUIDA nem move uma reserva já iniciada para contornar o cancelamento. Mudança concorrente de estado não pode reativar uma reserva.
 
-**Limite:** não existe autenticação de titular nesta I2; CA05 depende de US05. Identificador fornecido na URL não autentica usuário. Usar somente homologação restrita. Cancelamento e criação foram exercitados no mesmo client; isso não comprova concorrência distribuída nem implementação da disponibilidade US04.
+**Limite:** não existe autenticação de titular nesta I2; CA05 depende de US05. Identificador fornecido na URL não autentica usuário. Usar somente homologação restrita. Cancelamento e criação foram exercitados no mesmo client; isso não comprova concorrência distribuída. A implementação da US04 está em avaliação no PR #16, com falha adicional pendente no QA.
 
 ### US04 — Consultar disponibilidade
 
@@ -75,7 +75,7 @@ Cada US agrupa requisitos internos com valor para um perfil, evitando histórias
 - CA02 (P0): CANCELADA não ocupa horário; limites contíguos não são sobreposição.
 - CA03 (P0): quadra inativa não oferece agendamentos; inexistente e entrada inválida têm resposta explícita.
 - CA04 (P0): nenhuma reserva resulta em todos os intervalos permitidos disponíveis, não em quadra inexistente.
-- CA05 (P0): definir janela de funcionamento e granularidade antes de produzir lista de horários livres; não presumir funcionamento 24 h nem slots fixos.
+- CA05 (P0): janela de funcionamento **08:00–22:00**, slots de **60 minutos**, confirmados pelo responsável pela entrega da T3 para o QA do PR #16. Não presumir funcionamento 24 h. Os exemplos do PTI usam essa configuração.
 
 ### US05 — Acessar minha conta
 

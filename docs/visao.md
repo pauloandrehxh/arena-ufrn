@@ -20,7 +20,7 @@ O produto deve permitir consultar quadras e disponibilidade, reservar horários,
 
 **Base existente:** backend Node.js/Express, Prisma e SQLite; entidades Usuario, Quadra e Reserva; operações CRUD; validações básicas de reservas; frontend React/Vite/Tailwind com página inicial e consulta de quadras; testes Jest/Supertest.
 
-**Ainda não entregue como fluxo completo:** reserva pela interface, cancelamento preservando histórico, cálculo de disponibilidade, autenticação, papéis de acesso e limites anti-monopólio. Um campo ou endpoint existente não comprova o atendimento integral de um requisito.
+**Ainda não entregue como fluxo completo:** reserva e cancelamento pela interface, consulta de disponibilidade integrada (implementação em avaliação no PR #16), autenticação, papéis de acesso e limites anti-monopólio. Cancelamento lógico já existe no backend via PR #15. Um campo ou endpoint existente não comprova o atendimento integral de um requisito.
 
 **Fora do escopo:** pagamentos, integração institucional real LDAP/SSO, envio real de e-mails, gestão de turmas/departamentos/centros e infraestrutura física da universidade.
 
@@ -61,7 +61,7 @@ P0 = essencial; P1 = importante; P2 = evolução desejável. Os estados abaixo d
 | RF01 | Criar reserva para usuário e quadra ativos em intervalo válido e sem sobreposição | P0 | US01 | Parcial: backend existente, validações a completar |
 | RF02 | Cadastrar, listar, consultar e atualizar quadras | P0 | US02 | Backend existente; validações e aceite a completar |
 | RF03 | Cancelar reserva preservando registro e liberando o intervalo | P0 | US03 | Implementação inicial na branch T3; PATCH/DELETE preservam histórico; QA/aceite pendentes |
-| RF04 | Consultar disponibilidade de uma quadra por data | P0 | US04 | Pendente; listagem de reservas não calcula disponibilidade |
+| RF04 | Consultar disponibilidade de uma quadra por data | P0 | US04 | Implementação no PR #16 de Luis; QA de Paulo: 8 casos planejados passaram, 1 falha adicional pendente de correção e reteste |
 | RF05 | Autenticar usuário e encerrar sua sessão | P0 | US05 | Pendente |
 | RF06 | Manter usuários com e-mail/matrícula únicos e controlar sua situação ativa | P0 | US06 | CRUD existente; autorização e aceite pendentes |
 | RF07 | Exibir somente as reservas do usuário autenticado | P1 | US07 | Consulta por ID de usuário existente, sem autenticação |

@@ -89,9 +89,9 @@ IDs inexistentes devem ser verificados ausentes. Cada variação restaura a fixt
 | I2-CT11 / CA02 | R ATIVA 14:00–15:00, W/G configurados | 1. Consultar disponibilidade; 2. verificar limites contíguos | Q, D; intervalos 13:00–14:00 e 15:00–16:00 | Ambos disponíveis; contiguidade não é tratada como sobreposição | Unidade de intervalos + sistema/API |
 | I2-CT12 / CA03 | Q inativo; W/G definidos | 1. Consultar Q/D; 2. conferir estado persistido | Q inativo, D | Não oferecer novos agendamentos; resposta explícita de indisponibilidade, sem alterar histórico | Sistema/API |
 | I2-CT13 / CA03 | ID 2147483647 ausente; Q ativo | 1. Consultar inexistente; 2. consultar ID não numérico e data inválida em cenários isolados | ID 2147483647; ID `abc`; date `2099-02-30` | Distinguir recurso inexistente de entrada inválida; rejeição explícita sem disponibilidade falsa; códigos definidos antes de executar | Unidade + sistema/API |
-| I2-CT14 / CA04/05 | Q ativo, catálogo de reservas vazio em D, W/G configurados | 1. Consultar Q/D; 2. conferir quantidade/limites dos intervalos | Q, D, W=09:00–18:00, G=60 min | Dia disponível dentro da janela; se contrato retorna slots, nove slots de uma hora; não responder quadra inexistente | Sistema/API |
+| I2-CT14 / CA04/05 | Q ativo, catálogo de reservas vazio em D, W/G configurados | 1. Consultar Q/D; 2. conferir quantidade/limites dos intervalos | Q, D, W=08:00–22:00, G=60 min | Dia disponível dentro da janela; 14 slots de uma hora; não responder quadra inexistente | Sistema/API |
 | I2-CT15 / CA01 | R em Q2/D e outra reserva em Q/D+1; Q/D sem ocupações, W/G definidos | 1. Consultar Q/D; 2. comparar com consultas de Q2/D e Q/D+1 | Q/Q2, D e `2099-10-11` | Cada consulta considera somente sua quadra/data; nenhum vazamento de ocupações entre consultas | Integração/persistência |
-| I2-CT16 / CA05 | Política e configuração W/G homologadas no ambiente | 1. Consultar; 2. inspecionar primeiro/último intervalo e limites | Q, D, W=09:00–18:00, G=60 min | Nenhum intervalo antes das 09:00 ou após as 18:00; fim às 18:00 não gera slot adicional; não pressupor funcionamento 24h | Unidade de fronteiras + sistema/API |
+| I2-CT16 / CA05 | Política e configuração W/G homologadas no ambiente | 1. Consultar; 2. inspecionar primeiro/último intervalo e limites | Q, D, W=08:00–22:00, G=60 min | Nenhum intervalo antes das 08:00 ou após as 22:00; fim às 22:00 não gera slot adicional; não pressupor funcionamento 24h | Unidade de fronteiras + sistema/API |
 
 ### 5.4 Critérios, cronograma e riscos
 
@@ -134,3 +134,14 @@ continuam pendentes. A issue individual de Paulo na disciplina é
 A revisão final local de 09/10/2026 passou **192 testes em nove suítes**,
 incluindo regressões adicionais de IDs/campos internos no PUT. Implementação
 local da US03 concluída; conclusão da tarefa ainda depende das pendências acima.
+
+## 7. QA de Paulo na US04 — revisão do PR #16
+
+O responsável pela T3 confirmou **W=08:00–22:00 e G=60 minutos** para a US04;
+essa decisão substitui somente os exemplos 09:00–18:00 acima, sem alterar os
+resultados históricos. A revisão `725274c` de Luis foi avaliada com os casos
+I2-CT09–CT16: **8 Passou**. Um cenário adicional de falha de dependência
+**Falhou** (400 com mensagem interna, esperado 500 genérico). Relatório e
+passos de reprodução: [T3 / US04](../qa/t3-us04-disponibilidade.md). A US03
+foi integrada à `main` no [PR #15](https://github.com/pauloandrehxh/arena-ufrn/pull/15).
+Não declarar US04 aprovada antes da correção e do reteste do defeito.
