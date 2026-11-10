@@ -26,88 +26,88 @@ const INCLUDE_RESERVA = {
     quadra: true,
 };
 
-export function createReservaService(prisma, { agora = () => new Date() } = {}) {
+async function validarUsuario(usuarioId, banco) {
+    const usuario = await banco.usuario.findUnique({
+        where: { id: usuarioId },
+    });
 
-    async function validarUsuario(usuarioId, banco = prisma) {
-        const usuario = await banco.usuario.findUnique({
-            where: { id: usuarioId },
-        });
-
-        if (!usuario) {
-            throw new ReservaValidationError('Usuário não encontrado.');
-        }
-
-        if (!usuario.active) {
-            throw new ReservaValidationError('Usuário inativo.');
-        }
-
-        return usuario;
+    if (!usuario) {
+        throw new ReservaValidationError('Usuário não encontrado.');
     }
 
-    async function validarQuadra(quadraId, banco = prisma) {
-        const quadra = await banco.quadra.findUnique({
-            where: { id: quadraId },
-        });
-
-        if (!quadra) {
-            throw new ReservaValidationError('Quadra não encontrada.');
-        }
-
-        if (!quadra.active) {
-            throw new ReservaValidationError('Quadra indisponível.');
-        }
-
-        return quadra;
+    if (!usuario.active) {
+        throw new ReservaValidationError('Usuário inativo.');
     }
 
-    async function verificarConflito(data, banco = prisma, id = null) {
-        const conflito = await banco.reserva.findFirst({
-            where: {
-                ...(id ? { id: { not: id } } : {}),
-                quadraId: data.quadraId,
-                date: data.date,
-                status: STATUS_ATIVA,
-                startTime: {
-                    lt: data.endTime,
-                },
-                endTime: {
-                    gt: data.startTime,
-                },
+    return usuario;
+}
+
+async function validarQuadra(quadraId, banco) {
+    const quadra = await banco.quadra.findUnique({
+        where: { id: quadraId },
+    });
+
+    if (!quadra) {
+        throw new ReservaValidationError('Quadra não encontrada.');
+    }
+
+    if (!quadra.active) {
+        throw new ReservaValidationError('Quadra indisponível.');
+    }
+
+    return quadra;
+}
+
+async function verificarConflito(data, banco, id = null) {
+    const conflito = await banco.reserva.findFirst({
+        where: {
+            ...(id ? { id: { not: id } } : {}),
+            quadraId: data.quadraId,
+            date: data.date,
+            status: STATUS_ATIVA,
+            startTime: {
+                lt: data.endTime,
             },
-        });
+            endTime: {
+                gt: data.startTime,
+            },
+        },
+    });
 
-        if (conflito) {
-            throw new ReservaValidationError(
-                'Já existe uma reserva para essa quadra nesse horário.'
-            );
-        }
+    if (conflito) {
+        throw new ReservaValidationError(
+            'Já existe uma reserva para essa quadra nesse horário.'
+        );
+    }
+}
+
+function verificarErroPrisma(error, mensagem) {
+    if (error.code === ERRO_REGISTRO_NAO_ENCONTRADO) {
+        throw new ReservaConflictError(mensagem);
     }
 
-    function verificarErroPrisma(error, mensagem) {
-        if (error.code === ERRO_REGISTRO_NAO_ENCONTRADO) {
-            throw new ReservaConflictError(mensagem);
-        }
+    throw error;
+}
 
-        throw error;
+function validarReservaAtiva(reserva, agora) {
+    if (!reserva) {
+        throw new ReservaNotFoundError();
     }
 
-    async function validarReservaAtiva(reserva) {
-        if (!reserva) {
-            throw new ReservaNotFoundError();
-        }
-
-        if (reserva.status !== STATUS_ATIVA) {
-            throw new ReservaConflictError(
-                'Somente reservas ATIVA podem ser atualizadas.'
-            );
-        }
-
-        if (!inicioReservaNoFuturo(reserva.date, reserva.startTime, agora())) {
-            throw new ReservaConflictError(
-                'Não é possível atualizar uma reserva já iniciada.'
-            );
-        }
+    if (reserva.status !== STATUS_ATIVA) {
+        throw new ReservaConflictError(
+            'Somente reservas ATIVA podem ser atualizadas.'
+        );
     }
+
+    if (!inicioReservaNoFuturo(reserva.date, reserva.startTime, agora())) {
+        throw new ReservaConflictError(
+            'Não é possível atualizar uma reserva já iniciada.'
+        );
+    }
+}
+
+export function createReservaService(prisma, { agora = () => new Date() } = {}) {
 
     async function listarReservas() {
         return prisma.reserva.findMany({
@@ -185,7 +185,7 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
             where: { id },
         });
 
-        await validarReservaAtiva(reservaAtual);
+        validarReservaAtiva(reservaAtual, agora);
 
         const dadosAtualizados = {
             ...reservaAtual,
@@ -194,12 +194,12 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
 
         if (data.usuarioId !== undefined) {
             validarIdReserva(data.usuarioId, 'usuarioId');
-            await validarUsuario(data.usuarioId);
+            await validarUsuario(data.usuarioId, prisma);
         }
 
         if (data.quadraId !== undefined) {
             validarIdReserva(data.quadraId, 'quadraId');
-            await validarQuadra(data.quadraId);
+            await validarQuadra(data.quadraId, prisma);
         }
 
         dadosAtualizados.date = normalizarDataReserva(
