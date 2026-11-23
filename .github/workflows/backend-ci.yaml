@@ -11,7 +11,7 @@ on:
 
 jobs:
   test-and-sonar:
-    name: Testes e análise SonarQube
+    name: Testes, cobertura e análise SonarQube
 
     runs-on: ubuntu-latest
 
@@ -31,11 +31,27 @@ jobs:
         with:
           node-version: 22.12.0
           cache: pnpm
-          cache-dependency-path: backend/pnpm-lock.yaml
+          cache-dependency-path: |
+            backend/pnpm-lock.yaml
+            frontend/pnpm-lock.yaml
 
-      - name: Instalar dependências
+      - name: Instalar dependências do backend
         working-directory: backend
         run: pnpm install --frozen-lockfile
+
+      - name: Instalar dependências do frontend
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Checagem estática do backend
+        working-directory: backend
+        run: |
+          node --check server.js
+          find src -type f -name '*.js' -exec node --check {} \;
+
+      - name: Lint do frontend
+        working-directory: frontend
+        run: pnpm lint
 
       - name: Gerar Prisma Client
         working-directory: backend
@@ -55,8 +71,43 @@ jobs:
         working-directory: backend
         run: pnpm test:coverage
 
+      - name: Publicar relatório de cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-backend
+          path: backend/coverage/
+
       - name: Executar análise SonarQube
         uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  deploy:
+    name: Deploy na Render
+    needs: test-and-sonar
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Disparar deploy do commit testado
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl --fail --silent --show-error --get \
+            --data-urlencode "ref=${{ github.sha }}" \
+            "$DEPLOY_HOOK_URL"
+
+  smoke:
+    name: Smoke test pós-deploy
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verificar GET /health na aplicação publicada
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 60 --retry-delay 10 --retry-connrefused \
+            "$APP_URL/health"

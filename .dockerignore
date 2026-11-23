@@ -1,0 +1,10 @@
+.git
+.github
+docs
+**/node_modules
+**/coverage
+**/dist
+**/.env
+**/*.db
+**/*.db-journal
+**/*.log

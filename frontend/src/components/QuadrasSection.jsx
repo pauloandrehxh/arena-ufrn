@@ -19,7 +19,7 @@ export function QuadrasSection() {
 
     // Busca as quadras no backend ou usa os dados iniciais
     useEffect(() => {
-        fetch('http://localhost:3000/api/quadras')
+        fetch('/api/quadras')
             .then((res) => res.json())
             .then((data) => {
                 if (Array.isArray(data) && data.length > 0) {
