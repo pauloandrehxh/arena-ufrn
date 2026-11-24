@@ -62,14 +62,42 @@ Branch `demo/falha-ci`, PR [#25](https://github.com/pauloandrehxh/arena-ufrn/pul
 - Resultado: job de CI **passou em 1m06s**; deploy e smoke permaneceram `skipped` por
   se tratar de PR.
 
-## 4. Deploy e smoke test em produção
+## 4. Deploy e smoke test em produção — executados
 
-**PENDENTE.** Depende de configurações externas que não podem ser feitas pelo agente:
+- Aplicação publicada: <https://arena-ufrn-dbsz.onrender.com>
+- Variável `APP_URL`: configurada no repositório com a URL acima.
+- Deploy hook: cadastrado como secret `RENDER_DEPLOY_HOOK_URN` (grafia com `URN`).
+  O workflow aceita esse nome e também o nome canônico `RENDER_DEPLOY_HOOK_URL`
+  por meio de `secrets.RENDER_DEPLOY_HOOK_URL || secrets.RENDER_DEPLOY_HOOK_URN`.
 
-1. criação do Web Service na Render a partir de `render.yaml`;
-2. cadastro do deploy hook como secret `RENDER_DEPLOY_HOOK_URL` no repositório;
-3. cadastro da URL pública como variável `APP_URL`;
-4. merge do PR #24 em `main` para disparar `deploy` → `smoke`.
+### 4.1 Primeiro deploy após o merge do PR #24
 
-Após essas etapas, registrar aqui o run ID, a URL verificada e a resposta de `GET /health`.
-Não há resultado de deploy ou smoke registrado até o momento.
+- Run: [45300024428](https://github.com/pauloandrehxh/arena-ufrn/actions/runs/45300024428).
+- Job de CI: passou em 1m20s.
+- Job `Deploy na Render`: passou em 4s — deploy hook disparado com o commit testado.
+- Job `Smoke test pós-deploy`: passou em 3s — `GET /health` retornou HTTP 200.
+- Resposta obtida manualmente: `{"status":"ok","service":"arena-ufrn","timestamp":"2026-11-24T00:49:27.673Z"}`.
+
+### 4.2 Correção do serving do frontend
+
+A verificação manual de `GET /` revelou que a aplicação ainda devolvia
+`{"message":"Arena UFRN API funcionando!"}`: a rota `GET /` da API era registrada
+antes do middleware de arquivos estáticos no `server.js`.
+
+Correção: `backend/src/static-app.js` monta um app externo que serve os estáticos
+e o fallback SPA antes de repassar `/api` e `/health` ao app da API. Quatro testes
+de integração foram adicionados em
+`backend/tests/integration/static-app.integration.test.js`. PR
+[arena-ufrn #26](https://github.com/pauloandrehxh/arena-ufrn/pull/26),
+mergeado em `main`.
+
+- Run da correção: [45301240903](https://github.com/pauloandrehxh/arena-ufrn/actions/runs/45301240903).
+- Job de CI: passou em 1m30s, com **608 testes em 32 suítes**.
+- Job `Deploy na Render`: passou em 3s.
+- Job `Smoke test pós-deploy`: passou em 3s.
+- Branch `ci/t4-cicd-render` foi alinhada com a `main` para o caso de o serviço
+  da Render estar vinculado a ela.
+
+**Nota de verificação:** o token da Render não está disponível neste ambiente,
+logo não foi possível consultar o status interno do deploy pelo painel/API. O
+registro acima é do pipeline do GitHub e das respostas HTTP obtidas por `curl`.

@@ -468,7 +468,9 @@ O job de CI realiza:
 
 Qualquer falha nesses passos bloqueia a publicação. Em `push` na `main` com o CI verde, o job `deploy` dispara o deploy hook da Render com o commit testado e, em seguida, o job `smoke` verifica `GET /health` na aplicação publicada. O deploy não é disparado por Pull Request.
 
-O `Dockerfile` multi-stage gera um único container com o backend Express servindo o build do React. `render.yaml` define o Web Service Docker com health check em `/health` e auto deploy desativado. A URL pública e o resultado do smoke test em produção ainda dependem da configuração externa da Render; veja o estado em [`docs/evidencias/t4-cicd.md`](./docs/evidencias/t4-cicd.md).
+O `Dockerfile` multi-stage gera um único container com o backend Express servindo o build do React. `render.yaml` define o Web Service Docker com health check em `/health` e auto deploy desativado.
+
+A aplicação está publicada em <https://arena-ufrn-dbsz.onrender.com>. O deploy e o smoke test em produção foram executados com sucesso após os merges dos PRs [#24](https://github.com/pauloandrehxh/arena-ufrn/pull/24) e [#26](https://github.com/pauloandrehxh/arena-ufrn/pull/26). O serving do React na raiz foi corrigido e protegido por testes de integração. Evidências completas em [`docs/evidencias/t4-cicd.md`](./docs/evidencias/t4-cicd.md).
 
 
 ## Referências de estudo
