@@ -470,7 +470,7 @@ Qualquer falha nesses passos bloqueia a publicação. Em `push` na `main` com o 
 
 O `Dockerfile` multi-stage gera um único container com o backend Express servindo o build do React. `render.yaml` define o Web Service Docker com health check em `/health` e auto deploy desativado.
 
-A aplicação está publicada em <https://arena-ufrn-dbsz.onrender.com>. O deploy e o smoke test em produção foram executados com sucesso após os merges dos PRs [#24](https://github.com/pauloandrehxh/arena-ufrn/pull/24) e [#26](https://github.com/pauloandrehxh/arena-ufrn/pull/26). O serving do React na raiz foi corrigido e protegido por testes de integração. Evidências completas em [`docs/evidencias/t4-cicd.md`](./docs/evidencias/t4-cicd.md).
+A aplicação está publicada em <https://arena-ufrn-dbsz.onrender.com>. O deploy e o smoke test em produção foram executados com sucesso após os merges dos PRs [#24](https://github.com/pauloandrehxh/arena-ufrn/pull/24), [#26](https://github.com/pauloandrehxh/arena-ufrn/pull/26) e [#28](https://github.com/pauloandrehxh/arena-ufrn/pull/28). A raiz entrega o build do React, `/api` responde e `/health` retorna HTTP 200 — verificado por `curl` em produção. O serving estático agora detecta automaticamente o `index.html`, sem depender da variável `SERVE_STATIC`. Evidências completas em [`docs/evidencias/t4-cicd.md`](./docs/evidencias/t4-cicd.md).
 
 
 ## Referências de estudo
