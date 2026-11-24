@@ -92,7 +92,7 @@ jobs:
     steps:
       - name: Disparar deploy do commit testado
         env:
-          DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL || secrets.RENDER_DEPLOY_HOOK_URN }}
         run: |
           curl --fail --silent --show-error --get \
             --data-urlencode "ref=${{ github.sha }}" \
