@@ -101,3 +101,49 @@ mergeado em `main`.
 **Nota de verificação:** o token da Render não está disponível neste ambiente,
 logo não foi possível consultar o status interno do deploy pelo painel/API. O
 registro acima é do pipeline do GitHub e das respostas HTTP obtidas por `curl`.
+
+### 4.3 Correção final — detecção automática do build
+
+Mesmo após o merge do PR #26 e um deploy manual na Render, `GET /` continuou
+devolvendo o JSON da API. A causa provável é o serviço ter sido criado
+manualmente, sem aplicar o `render.yaml`: a variável `SERVE_STATIC` não chegava
+ao container e o `server.js` mantinha apenas o app da API.
+
+Correção definitiva no PR [arena-ufrn #28](https://github.com/pauloandrehxh/arena-ufrn/pull/28):
+
+- `temBuildDoFrontend(PUBLIC_DIR)` verifica a existência de `index.html`;
+- `server.js` ativa o serving estático quando o build existe **ou** quando
+  `SERVE_STATIC=true`, e passou a logar o resultado no startup;
+- dois testes de integração novos cobrem a detecção com e sem build.
+
+- Run: [45307236158](https://github.com/pauloandrehxh/arena-ufrn/actions/runs/45307236158).
+- Job de CI: passou em 1m23s, com **610 testes em 32 suítes**.
+- Job `Deploy na Render`: passou em 4s.
+- Job `Smoke test pós-deploy`: passou em 3s.
+
+#### Verificação manual em produção
+
+```text
+GET https://arena-ufrn-dbsz.onrender.com/
+HTTP 200 — início do corpo:
+<!doctype html>
+<html lang="pt-BR">
+  ...
+  <title>Arena UFRN — Reserva de Quadras</title>
+  <script type="module" crossorigin src="/assets/index-DNWh4G-j.js"></script>
+  ...
+  <div id="root"></div>
+```
+
+```text
+GET https://arena-ufrn-dbsz.onrender.com/health
+{"status":"ok","service":"arena-ufrn","timestamp":"2026-11-24T01:46:46.612Z"}
+
+GET https://arena-ufrn-dbsz.onrender.com/api/quadras
+[]
+
+GET https://arena-ufrn-dbsz.onrender.com/assets/index-DNWh4G-j.js
+200 text/javascript; charset=utf-8
+```
+
+Com isso, backend e frontend foram confirmados no mesmo container e domínio.
