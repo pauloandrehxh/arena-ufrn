@@ -1,5 +1,10 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
+
+export function temBuildDoFrontend(publicDir) {
+    return fs.existsSync(path.join(publicDir, 'index.html'));
+}
 
 export function createStaticApp(apiApp, publicDir) {
     const app = express();
