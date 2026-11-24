@@ -452,23 +452,23 @@ Já nos testes de integração, foi possível verificar a comunicação entre Ex
 
 Essa separação tornou mais claro o papel de cada tipo de teste e também aumentou a segurança durante alterações e refatorações do código.
 
-## Integração Contínua
+## Integração e Entrega Contínuas
 
-O projeto utiliza **GitHub Actions** para executar automaticamente verificações sempre que mudanças são enviadas ao repositório.
+O projeto utiliza **GitHub Actions** para executar automaticamente verificações sempre que mudanças são enviadas ao repositório. O workflow está em [`.github/workflows/backend-ci.yaml`](./.github/workflows/backend-ci.yaml) e é acionado por `push` e `pull_request` para `main`.
 
-O workflow realiza:
+O job de CI realiza:
 
-1. configuração do ambiente;
-2. instalação das dependências;
-3. geração do Prisma Client;
-4. execução dos testes unitários;
-5. execução dos testes de integração;
-6. geração da cobertura;
-7. análise com SonarQube.
+1. configuração do ambiente com cache dos lockfiles;
+2. instalação das dependências de backend e frontend;
+3. checagem estática do backend e lint do frontend;
+4. geração do Prisma Client;
+5. execução dos testes unitários;
+6. execução dos testes de integração;
+7. geração da cobertura, upload do relatório e análise com SonarQube.
 
-O workflow pode ser consultado em:
+Qualquer falha nesses passos bloqueia a publicação. Em `push` na `main` com o CI verde, o job `deploy` dispara o deploy hook da Render com o commit testado e, em seguida, o job `smoke` verifica `GET /health` na aplicação publicada. O deploy não é disparado por Pull Request.
 
-[GitHub Actions](./.github/workflows/)
+O `Dockerfile` multi-stage gera um único container com o backend Express servindo o build do React. `render.yaml` define o Web Service Docker com health check em `/health` e auto deploy desativado. A URL pública e o resultado do smoke test em produção ainda dependem da configuração externa da Render; veja o estado em [`docs/evidencias/t4-cicd.md`](./docs/evidencias/t4-cicd.md).
 
 
 ## Referências de estudo

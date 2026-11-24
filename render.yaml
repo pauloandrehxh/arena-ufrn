@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: arena-ufrn
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeployTrigger: 'off'
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:/data/arena.db
+      - key: SERVE_STATIC
+        value: 'true'
+      - key: PUBLIC_DIR
+        value: /app/public

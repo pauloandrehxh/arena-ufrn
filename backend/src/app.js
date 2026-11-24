@@ -43,6 +43,14 @@ export function createApp(prisma, { agora } = {}) {
         });
     });
 
+    app.get('/health', (req, res) => {
+        res.status(200).json({
+            status: 'ok',
+            service: 'arena-ufrn',
+            timestamp: new Date().toISOString(),
+        });
+    });
+
     // Quadras
     const quadraService = createQuadraService(prisma);
     const quadraController = createQuadraController(quadraService);
