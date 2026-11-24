@@ -15,7 +15,8 @@
 - [Plano Geral de Testes](./plano_teste.md): estratégia e critérios de conclusão.
 - [Evidência de execução atual](./evidencias/p1-execucao-testes-20261006.md).
 - [Evidência de desenvolvimento da T2 / US01](./evidencias/t2-us01-execucao-testes-20261006.md).
-- [Evidência inicial da T3 / US03](./evidencias/t3-us03-testes-20261008.md) — implementação/testes locais, QA e publicação pendentes.
+- [Evidência inicial da T3 / US03](./evidencias/t3-us03-testes-20261008.md) — execução local histórica, anterior ao merge do PR #15.
+- [QA de Paulo André da T3 / US04](./qa/t3-us04-disponibilidade.md) — PR #16 de Luis, 8 casos planejados passaram e 1 caso adicional falhou.
 - [Relatório de QA T2 / US02](./qa/t2-us02-quadras.md) — seis falhas históricas; reteste da aplicação corrigida com 13 casos aprovados.
 - [Relatório de Luis Felipe sobre reservas](./qa/t2-us01-reservas.md) — publicado pelo colega; faltam resultados observados e evidências por caso.
 - [Auditoria posterior e bloqueio de autenticação LABENS](./evidencias/t2-auditoria-sonarqube.md).

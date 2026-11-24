@@ -135,3 +135,14 @@ Cobertura global final: **80,92% statements, 80,86% lines, 74,86% branches e
 91,54% functions**; service de reservas mantém 100% statements/lines/functions
 e 97,67% branches. Resultados anteriores permanecem como histórico da execução
 de 08/10; a evidência acima contém a transcrição final.
+
+## 13. PRs da T3 e QA cruzado da US04
+
+US03 integrada à `main` no [PR #15](https://github.com/pauloandrehxh/arena-ufrn/pull/15).
+Luis publicou o [PR #16](https://github.com/pauloandrehxh/arena-ufrn/pull/16)
+para a US04; o QA independente de Paulo executou I2-CT09–CT16 no commit
+`725274c` (8 Passou) e um caso adicional de erro de dependência (1 Falhou).
+O [CI do PR #16](https://github.com/pauloandrehxh/arena-ufrn/actions/runs/38014945803)
+passou 201 testes/10 suítes e enviou análise pelo scanner; Quality Gate e
+resultados do painel LABENS não verificados por falta de autenticação (401).
+Defeito, evidências e reprodução: [QA T3 / US04](./qa/t3-us04-disponibilidade.md).
