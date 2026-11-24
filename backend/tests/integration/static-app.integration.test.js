@@ -5,7 +5,7 @@ import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
 
-import { createStaticApp } from '../../src/static-app.js';
+import { createStaticApp, temBuildDoFrontend } from '../../src/static-app.js';
 
 let publicDir;
 let app;
@@ -53,5 +53,21 @@ describe('Integração - serving do frontend no mesmo container', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('ok');
+  });
+});
+
+describe('Integração - detecção automática do build do frontend', () => {
+  test('detecta index.html presente no diretório público', () => {
+    expect(temBuildDoFrontend(publicDir)).toBe(true);
+  });
+
+  test('não detecta build em diretório vazio', () => {
+    const diretorioVazio = fs.mkdtempSync(path.join(os.tmpdir(), 'arena-vazio-'));
+
+    try {
+      expect(temBuildDoFrontend(diretorioVazio)).toBe(false);
+    } finally {
+      fs.rmSync(diretorioVazio, { recursive: true, force: true });
+    }
   });
 });
