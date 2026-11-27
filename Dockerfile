@@ -24,14 +24,23 @@ ENV NODE_ENV=production \
     PORT=10000 \
     SERVE_STATIC=true \
     PUBLIC_DIR=/app/public
-RUN mkdir -p /app/public
-COPY --from=backend-deps /app/backend/node_modules ./node_modules
-COPY --from=backend-deps /app/backend/package.json ./package.json
-COPY --from=backend-deps /app/backend/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=backend-deps /app/backend/prisma7.config.ts ./prisma7.config.ts
-COPY --from=backend-deps /app/backend/prisma ./prisma
-COPY backend/server.js ./server.js
-COPY backend/src ./src
-COPY --from=frontend-build /app/dist /app/public
+
+RUN mkdir -p /app/backend /app/public && chown -R node:node /app
+
+COPY --chown=node:node --from=backend-deps /app/backend/node_modules ./node_modules
+COPY --chown=node:node --from=backend-deps /app/backend/package.json ./package.json
+COPY --chown=node:node --from=backend-deps /app/backend/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --chown=node:node --from=backend-deps /app/backend/prisma7.config.ts ./prisma7.config.ts
+COPY --chown=node:node --from=backend-deps /app/backend/prisma ./prisma
+COPY --chown=node:node backend/server.js ./server.js
+COPY --chown=node:node backend/src ./src
+COPY --chown=node:node --from=frontend-build /app/dist /app/public
+
+USER node
+
 EXPOSE 10000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 10000) + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+
 CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy --config prisma7.config.ts && node server.js"]

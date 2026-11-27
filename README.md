@@ -5,9 +5,15 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" alt="Status do projeto">
+  <a href="https://github.com/pauloandrehxh/arena-ufrn/actions/workflows/backend-ci.yaml">
+    <img src="https://github.com/pauloandrehxh/arena-ufrn/actions/workflows/backend-ci.yaml/badge.svg" alt="CI/CD Arena UFRN">
+  </a>
+  <a href="https://labens.dct.ufrn.br/sonarqube/dashboard?id=arena-ufrn">
+    <img src="https://labens.dct.ufrn.br/sonarqube/api/project_badges/measure?project=arena-ufrn&metric=alert_status" alt="Quality Gate Status">
+  </a>
   <img src="https://img.shields.io/badge/Node.js-22%2B-green" alt="Node.js">
   <img src="https://img.shields.io/badge/pnpm-12.3.4-orange" alt="pnpm">
+  <img src="https://img.shields.io/badge/PostgreSQL-16-336791" alt="PostgreSQL 16">
 </p>
 
 <p align="center">
@@ -56,6 +62,7 @@ Consulte os documentos para mais detalhes sobre visão do projeto, decisões de 
 - [Plano das seis iterações](./docs/plano_iteracoes.md)
 - [Plano da Iteração 1](./docs/iteracoes/iteracao01.md)
 - [Estado dos testes](./docs/estado_testes.md)
+- [Relatório Técnico de DevOps, CI e CD (P5)](./docs/relatorio-ci-cd.md)
 
 ## 🛠️ Tecnologias
 

@@ -19,14 +19,32 @@ export class AuthConflictError extends Error {
     }
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function ehEmailValido(valor) {
+    const texto = valor.trim();
+    if (texto.length === 0 || texto.length > 254 || /\s/.test(texto)) {
+        return false;
+    }
+
+    const partes = texto.split('@');
+    if (partes.length !== 2) {
+        return false;
+    }
+
+    const [local, dominio] = partes;
+    if (!local || !dominio) {
+        return false;
+    }
+
+    const ponto = dominio.indexOf('.');
+    return ponto > 0 && ponto < dominio.length - 1;
+}
 
 export function validarDadosRegistro({ name, email, registration, password }) {
     if (typeof name !== 'string' || name.trim().length < 2) {
         throw new AuthValidationError('Nome deve ter ao menos 2 caracteres.');
     }
 
-    if (typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
+    if (typeof email !== 'string' || !ehEmailValido(email)) {
         throw new AuthValidationError('Informe um e-mail válido.');
     }
 
