@@ -15,6 +15,21 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: arena
+          POSTGRES_PASSWORD: arena_ci_password
+          POSTGRES_DB: arena_ufrn_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v6
@@ -49,27 +64,42 @@ jobs:
           node --check server.js
           find src -type f -name '*.js' -exec node --check {} \;
 
-      - name: Lint do frontend
+      - name: Lint e build do frontend
         working-directory: frontend
-        run: pnpm lint
+        run: |
+          pnpm lint
+          pnpm build
 
       - name: Gerar Prisma Client
         working-directory: backend
         run: pnpm prisma generate --config prisma7.config.ts
         env:
-          DATABASE_URL: file:./dev.db
+          DATABASE_URL: postgresql://arena:arena_ci_password@localhost:5432/arena_ufrn_test
 
       - name: Executar testes unitários
         working-directory: backend
         run: pnpm test:unit
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-test-secret-arena-ufrn-2026-32-chars
 
       - name: Executar testes de integração
         working-directory: backend
         run: pnpm test:integration
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://arena:arena_ci_password@localhost:5432/arena_ufrn_test
+          TEST_DATABASE_URL: postgresql://arena:arena_ci_password@localhost:5432/arena_ufrn_test
+          JWT_SECRET: ci-test-secret-arena-ufrn-2026-32-chars
 
       - name: Gerar cobertura
         working-directory: backend
         run: pnpm test:coverage
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://arena:arena_ci_password@localhost:5432/arena_ufrn_test
+          TEST_DATABASE_URL: postgresql://arena:arena_ci_password@localhost:5432/arena_ufrn_test
+          JWT_SECRET: ci-test-secret-arena-ufrn-2026-32-chars
 
       - name: Publicar relatório de cobertura
         uses: actions/upload-artifact@v4

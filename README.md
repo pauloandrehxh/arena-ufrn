@@ -79,11 +79,19 @@ Consulte os documentos para mais detalhes sobre visão do projeto, decisões de 
 
 ### Banco de dados
 
-| Tecnologia     | Utilização                      |
-| -------------- | ------------------------------- |
-| SQLite         | Banco de dados da aplicação     |
-| Prisma ORM     | Modelagem e acesso aos dados    |
-| Better SQLite3 | Adaptador utilizado pelo Prisma |
+| Tecnologia     | Utilização                            |
+| -------------- | ------------------------------------- |
+| PostgreSQL 16  | Banco de dados relacional             |
+| Prisma ORM 7   | Modelagem, migrations e acesso seguro |
+| `pg` + Adapter | Driver oficial (`@prisma/adapter-pg`) |
+
+### Autenticação e Segurança
+
+| Tecnologia          | Utilização                                     |
+| ------------------- | ---------------------------------------------- |
+| JWT (`jose`)        | Sessão assinada em cookie `HttpOnly` + Bearer  |
+| `node:crypto`       | Hash de senhas com `scrypt` e salt aleatório   |
+| RBAC (`ALUNO`/`GESTOR`) | Rotas e páginas restritas (`/minhas-reservas`, `/admin`) |
 
 ### Testes
 
@@ -270,26 +278,24 @@ Antes de executar o projeto, tenha instalado:
 
 * Git;
 * Node.js 22.12 ou superior;
-* pnpm 12.
+* pnpm 12;
+* Docker Desktop (para subir o PostgreSQL 16 via `docker compose`) ou instância PostgreSQL 16 local.
 
 Para verificar:
 
 ```bash
 node --version
 pnpm --version
+docker --version
 git --version
 ```
 
-### 1. Clone o repositório
+### 1. Clone o repositório e suba o PostgreSQL
 
 ```bash
 git clone https://github.com/pauloandrehxh/arena-ufrn.git
-```
-
-Entre na pasta:
-
-```bash
 cd arena-ufrn
+docker compose up -d
 ```
 
 ### 2. Backend
@@ -306,23 +312,26 @@ Instale as dependências:
 pnpm install
 ```
 
-Crie o arquivo `.env`:
+Configure o arquivo `.env` a partir de `.env.example`:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://arena:arena_dev_password@localhost:5432/arena_ufrn?schema=public"
+TEST_DATABASE_URL="postgresql://arena:arena_dev_password@localhost:5432/arena_ufrn"
+JWT_SECRET="altere-esta-chave-em-producao-com-32-ou-mais-caracteres"
+CORS_ORIGINS="http://localhost:5173"
 ```
 
-Gere o Prisma Client:
+Gere o Prisma Client, aplique as migrations e popule o banco inicial (seed):
 
 ```bash
-pnpm prisma generate --config prisma7.config.ts
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
 ```
 
-Execute as migrations do banco:
-
-```bash
-pnpm prisma migrate dev --config prisma7.config.ts
-```
+Credenciais criadas pelo seed em ambiente local:
+- **Gestor (Painel Restrito `/admin`):** `gestor@ufrn.br` / `Arena@123`
+- **Aluno demo (`/minhas-reservas`):** `aluno@ufrn.br` / `Arena@123`
 
 Inicie o servidor:
 
