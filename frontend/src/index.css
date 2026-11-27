@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-ufrn-950: #041D36;
+  --color-ufrn-900: #062A4D;
+  --color-ufrn-800: #0B3F72;
+  --color-ufrn-700: #0E5496;
+  --color-ufrn-600: #1368B8;
+  --color-ufrn-50: #EEF6FF;
+  --color-sand-50: #FAF7F2;
+  --color-sand-100: #F3ECE0;
+  --color-sand-200: #E6D9C3;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+  }
+}

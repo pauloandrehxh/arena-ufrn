@@ -184,28 +184,21 @@ test('Deve respeitar o status de disponibilidade das quadras', async (t) => {
     'Deveria existir pelo menos uma quadra com botão de status'
   );
 
-  // Se existir quadra disponível, verifica sua mensagem
+  // Se existir quadra disponível, verifica a navegação para a página de horários
   if (disponiveis.length > 0) {
     const botao = disponiveis[0];
 
-    const card = await botao.findElement(
-      By.xpath("./ancestor::div[contains(@class, 'bg-white')][1]")
-    );
-
-    const nome = await card
-      .findElement(By.css('h3'))
-      .getText();
-
     await botao.click();
 
-    const alerta = await driver.switchTo().alert();
-
-    assert.equal(
-      await alerta.getText(),
-      `Reserva para ${nome} em breve!`
+    await driver.wait(
+      until.urlContains('/quadras/'),
+      10000
     );
 
-    await alerta.accept();
+    await driver.wait(
+      until.elementLocated(By.css('h1')),
+      10000
+    );
   }
 
   // Se existir quadra indisponível, verifica se está desabilitada
