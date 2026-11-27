@@ -10,13 +10,11 @@ RUN pnpm build
 
 FROM node:22-alpine AS backend-deps
 WORKDIR /app/backend
-RUN apk add --no-cache python3 make g++ \
-    && corepack enable \
-    && corepack prepare pnpm@12.3.4 --activate
+RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
 COPY backend/package.json backend/pnpm-lock.yaml backend/pnpm-workspace.yaml \
     backend/prisma7.config.ts ./
 COPY backend/prisma ./prisma
-ENV DATABASE_URL=file:./dev.db
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
 RUN pnpm install --frozen-lockfile \
     && pnpm prisma generate --config prisma7.config.ts
 
@@ -24,10 +22,9 @@ FROM node:22-alpine AS runner
 WORKDIR /app/backend
 ENV NODE_ENV=production \
     PORT=10000 \
-    DATABASE_URL=file:/data/arena.db \
     SERVE_STATIC=true \
     PUBLIC_DIR=/app/public
-RUN mkdir -p /data /app/public
+RUN mkdir -p /app/public
 COPY --from=backend-deps /app/backend/node_modules ./node_modules
 COPY --from=backend-deps /app/backend/package.json ./package.json
 COPY --from=backend-deps /app/backend/pnpm-workspace.yaml ./pnpm-workspace.yaml

@@ -1,8 +1,18 @@
-import { QuadraValidationError } from '../lib/quadra.validation.js';
+import {
+    QuadraConflictError,
+    QuadraNotFoundError,
+    QuadraValidationError,
+} from '../lib/quadra.validation.js';
 
 function responderErro(res, error, mensagem) {
     if (error instanceof QuadraValidationError) {
         return res.status(400).json({ message: error.message });
+    }
+    if (error instanceof QuadraNotFoundError) {
+        return res.status(404).json({ message: error.message });
+    }
+    if (error instanceof QuadraConflictError) {
+        return res.status(409).json({ message: error.message });
     }
 
     return res.status(500).json({ message: mensagem });
@@ -27,7 +37,7 @@ export function createQuadraController(quadraService) {
 
             if (!quadra) {
                 return res.status(404).json({
-                    message: 'Quadra não encontrada.'
+                    message: 'Quadra não encontrada.',
                 });
             }
 
@@ -39,9 +49,12 @@ export function createQuadraController(quadraService) {
 
     async function criar(req, res) {
         try {
-            const { name } = req.body ?? {};
+            const { name, sport, description, active } = req.body ?? {};
+            const temExtras = sport !== undefined || description !== undefined || active !== undefined;
 
-            const quadra = await quadraService.criarQuadra(name);
+            const quadra = await quadraService.criarQuadra(
+                temExtras ? { name, sport, description, active } : name
+            );
 
             return res.status(201).json(quadra);
         } catch (error) {
@@ -52,16 +65,30 @@ export function createQuadraController(quadraService) {
     async function atualizar(req, res) {
         try {
             const id = Number(req.params.id);
-            const { name } = req.body ?? {};
+            const { name, sport, description, active } = req.body ?? {};
+            const temExtras = sport !== undefined || description !== undefined || active !== undefined;
 
             const quadra = await quadraService.atualizarQuadra(
                 id,
-                name
+                temExtras ? { name, sport, description, active } : name
             );
 
             return res.json(quadra);
         } catch (error) {
             return responderErro(res, error, 'Erro ao atualizar quadra.');
+        }
+    }
+
+    async function alterarStatus(req, res) {
+        try {
+            const id = Number(req.params.id);
+            const { active } = req.body ?? {};
+
+            const quadra = await quadraService.alterarStatusQuadra(id, active);
+
+            return res.json(quadra);
+        } catch (error) {
+            return responderErro(res, error, 'Erro ao alterar status da quadra.');
         }
     }
 
@@ -82,6 +109,7 @@ export function createQuadraController(quadraService) {
         buscarPorId,
         criar,
         atualizar,
-        deletar
+        alterarStatus,
+        deletar,
     };
 }

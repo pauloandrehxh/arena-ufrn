@@ -8,6 +8,7 @@ import {
 } from '@jest/globals';
 
 import { createReservaService } from '../../src/services/reserva.service.js';
+import { USUARIO_PUBLICO_SELECT } from '../../src/lib/usuario.select.js';
 
 const prismaMock = {
     $transaction: jest.fn(),
@@ -389,7 +390,7 @@ describe('US01 - validação e integridade da criação', () => {
         expect(reserva.status).toBe('ATIVA');
         expect(prismaMock.reserva.create).toHaveBeenCalledWith({
             data: { ...dadosValidos, date: new Date('2026-10-07'), status: 'ATIVA' },
-            include: { usuario: true, quadra: true },
+            include: { usuario: { select: USUARIO_PUBLICO_SELECT }, quadra: true },
         });
     });
 

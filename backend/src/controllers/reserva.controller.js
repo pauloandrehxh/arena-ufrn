@@ -1,10 +1,17 @@
 import {
-    ReservaValidationError, ReservaNotFoundError, ReservaConflictError, normalizarDataReserva,
+    ReservaValidationError,
+    ReservaNotFoundError,
+    ReservaConflictError,
+    ReservaForbiddenError,
+    normalizarDataReserva,
 } from '../lib/reserva.validation.js';
 
 function responderErroOperacao(res, error, mensagem) {
     if (error instanceof ReservaValidationError) {
         return res.status(400).json({ message: error.message });
+    }
+    if (error instanceof ReservaForbiddenError) {
+        return res.status(403).json({ message: error.message });
     }
     if (error instanceof ReservaNotFoundError) {
         return res.status(404).json({ message: error.message });
@@ -18,13 +25,31 @@ function responderErroOperacao(res, error, mensagem) {
 export function createReservaController(reservaService) {
     async function listar(req, res) {
         try {
-            const reservas = await reservaService.listarReservas();
+            const { quadraId, status, dateFrom, dateTo } = req.query ?? {};
+            const reservas = await reservaService.listarReservas({
+                quadraId,
+                status,
+                dateFrom,
+                dateTo,
+            });
 
             return res.status(200).json(reservas);
-        } catch {
-            return res.status(500).json({
-                message: 'Erro ao listar reservas.',
-            });
+        } catch (error) {
+            return responderErroOperacao(res, error, 'Erro ao listar reservas.');
+        }
+    }
+
+    async function listarMinhas(req, res) {
+        try {
+            const { status, dateFrom, dateTo } = req.query ?? {};
+            const reservas = await reservaService.buscarReservasPorUsuario(
+                req.usuario.id,
+                { status, dateFrom, dateTo }
+            );
+
+            return res.status(200).json(reservas);
+        } catch (error) {
+            return responderErroOperacao(res, error, 'Erro ao buscar suas reservas.');
         }
     }
 
@@ -46,6 +71,12 @@ export function createReservaController(reservaService) {
                 });
             }
 
+            if (req.usuario && req.usuario.role !== 'GESTOR' && reserva.usuarioId !== req.usuario.id) {
+                return res.status(403).json({
+                    message: 'Você não tem permissão para visualizar esta reserva.',
+                });
+            }
+
             return res.status(200).json(reserva);
         } catch {
             return res.status(500).json({
@@ -63,15 +94,22 @@ export function createReservaController(reservaService) {
             });
         }
 
+        if (req.usuario && req.usuario.role !== 'GESTOR' && req.usuario.id !== usuarioId) {
+            return res.status(403).json({
+                message: 'Você não tem permissão para consultar reservas de outro usuário.',
+            });
+        }
+
         try {
-            const reservas =
-                await reservaService.buscarReservasPorUsuario(usuarioId);
+            const { status, dateFrom, dateTo } = req.query ?? {};
+            const reservas = await reservaService.buscarReservasPorUsuario(
+                usuarioId,
+                { status, dateFrom, dateTo }
+            );
 
             return res.status(200).json(reservas);
-        } catch {
-            return res.status(500).json({
-                message: 'Erro ao buscar reservas do usuário.',
-            });
+        } catch (error) {
+            return responderErroOperacao(res, error, 'Erro ao buscar reservas do usuário.');
         }
     }
 
@@ -85,8 +123,7 @@ export function createReservaController(reservaService) {
         }
 
         try {
-            const reservas =
-                await reservaService.buscarReservasPorQuadra(quadraId);
+            const reservas = await reservaService.buscarReservasPorQuadra(quadraId);
 
             return res.status(200).json(reservas);
         } catch {
@@ -98,12 +135,18 @@ export function createReservaController(reservaService) {
 
     async function criar(req, res) {
         const {
-            usuarioId,
+            usuarioId: usuarioIdBody,
             quadraId,
             date,
             startTime,
             endTime,
         } = req.body ?? {};
+
+        const usuarioId = req.usuario
+            ? (req.usuario.role === 'GESTOR' && usuarioIdBody !== undefined
+                ? usuarioIdBody
+                : req.usuario.id)
+            : usuarioIdBody;
 
         if (
             !usuarioId ||
@@ -156,8 +199,7 @@ export function createReservaController(reservaService) {
                 dados.date = normalizarDataReserva(dados.date);
             }
 
-            const reserva =
-                await reservaService.atualizarReserva(id, dados);
+            const reserva = await reservaService.atualizarReserva(id, dados, req.usuario ?? null);
 
             return res.status(200).json(reserva);
         } catch (error) {
@@ -167,7 +209,10 @@ export function createReservaController(reservaService) {
 
     async function cancelar(req, res) {
         try {
-            const reserva = await reservaService.cancelarReserva(Number(req.params.id));
+            const reserva = await reservaService.cancelarReserva(
+                Number(req.params.id),
+                req.usuario ?? null
+            );
             return res.status(200).json(reserva);
         } catch (error) {
             return responderErroOperacao(res, error, 'Erro ao cancelar reserva.');
@@ -176,7 +221,10 @@ export function createReservaController(reservaService) {
 
     async function deletar(req, res) {
         try {
-            await reservaService.cancelarReserva(Number(req.params.id));
+            await reservaService.cancelarReserva(
+                Number(req.params.id),
+                req.usuario ?? null
+            );
             return res.status(204).send();
         } catch (error) {
             return responderErroOperacao(res, error, 'Erro ao cancelar reserva.');
@@ -185,12 +233,13 @@ export function createReservaController(reservaService) {
 
     return {
         listar,
+        listarMinhas,
         buscarPorId,
         listarPorUsuario,
         listarPorQuadra,
         criar,
         atualizar,
         cancelar,
-        deletar
+        deletar,
     };
 }

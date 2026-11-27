@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: arena-ufrn-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: arena
+      POSTGRES_PASSWORD: arena_dev_password
+      POSTGRES_DB: arena_ufrn
+    ports:
+      - "5432:5432"
+    volumes:
+      - arena_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arena -d arena_ufrn"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  arena_pgdata:

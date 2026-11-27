@@ -19,6 +19,13 @@ export class ReservaConflictError extends Error {
     }
 }
 
+export class ReservaForbiddenError extends Error {
+    constructor(message = 'Você não tem permissão para acessar ou alterar esta reserva.') {
+        super(message);
+        this.name = 'ReservaForbiddenError';
+    }
+}
+
 export function validarIdReserva(value, campo) {
     if (!Number.isInteger(value) || value <= 0 || value > 2147483647) {
         throw new ReservaValidationError(`${campo} deve ser um inteiro positivo válido.`);

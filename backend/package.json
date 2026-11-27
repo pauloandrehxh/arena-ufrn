@@ -5,6 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "node --watch server.js",
+    "db:generate": "prisma generate --config prisma7.config.ts",
+    "db:migrate": "prisma migrate dev --config prisma7.config.ts",
+    "db:deploy": "prisma migrate deploy --config prisma7.config.ts",
+    "db:seed": "node prisma/seed.js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --watch",
     "qa:quadras": "node tests/acceptance/quadras.qa.js",
@@ -25,17 +29,18 @@
   "packageManager": "pnpm@12.3.4",
   "type": "module",
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.10.0",
+    "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
-    "better-sqlite3": "12.11.1",
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "jose": "^6.0.0",
+    "pg": "^8.16.0"
   },
   "devDependencies": {
     "@stryker-mutator/core": "^10.1.1",
     "@stryker-mutator/jest-runner": "^10.1.1",
-    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.20.2",
+    "@types/pg": "^8.15.0",
     "dotenv": "^17.4.2",
     "jest": "^30.5.1",
     "prisma": "7.10.0",
