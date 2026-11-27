@@ -10,6 +10,7 @@ import {
 } from '@jest/globals';
 
 import { createApp } from '../../src/app.js';
+import { hashSenha } from '../../src/lib/password.js';
 import { criarBancoTeste } from '../helpers/banco-teste.js';
 
 let banco;
@@ -17,12 +18,14 @@ let prisma;
 let app;
 let usuario;
 let quadra;
+let senhaHash;
 
 const dataReserva = new Date('2099-10-10T00:00:00.000Z');
 
-beforeAll(() => {
-    banco = criarBancoTeste();
+beforeAll(async () => {
+    banco = await criarBancoTeste();
     prisma = banco.prisma;
+    senhaHash = await hashSenha('Arena@123');
 
     app = createApp(prisma, {
         agora: () => new Date('2099-10-01T12:00:00Z'),
@@ -39,6 +42,7 @@ beforeEach(async () => {
             name: 'Aluno sintético',
             email: 'disponibilidade@example.com',
             registration: 'US04',
+            passwordHash: senhaHash,
         },
     });
 

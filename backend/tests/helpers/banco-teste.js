@@ -1,40 +1,77 @@
-import Database from 'better-sqlite3';
-import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import 'dotenv/config';
+import { randomUUID } from 'node:crypto';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import pg from 'pg';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-export function criarBancoTeste() {
-    const diretorio = mkdtempSync(join(tmpdir(), 'arena-ufrn-test-'));
-    const arquivo = join(diretorio, 'test.db');
-    const migrations = fileURLToPath(new URL('../../prisma/migrations/', import.meta.url));
-    const banco = new Database(arquivo);
+const { Pool } = pg;
 
+function montarConnectionStringComSchema(baseUrl, schema) {
+    const url = new URL(baseUrl);
+    url.searchParams.set('schema', schema);
+    return url.toString();
+}
+
+export async function criarBancoTeste() {
+    const baseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+
+    if (!baseUrl) {
+        throw new Error('TEST_DATABASE_URL ou DATABASE_URL deve estar definida para os testes com PostgreSQL.');
+    }
+
+    const schema = `test_${randomUUID().replace(/-/g, '')}`;
+    const adminPool = new Pool({ connectionString: baseUrl });
+    const migrationsDir = fileURLToPath(new URL('../../prisma/migrations/', import.meta.url));
+
+    const client = await adminPool.connect();
     try {
-        banco.pragma('foreign_keys = ON');
-        for (const nome of readdirSync(migrations).sort()) {
-            if (nome.match(/^\d+_/)) {
-                banco.exec(readFileSync(join(migrations, nome, 'migration.sql'), 'utf8'));
+        await client.query(`CREATE SCHEMA "${schema}"`);
+        await client.query(`SET search_path TO "${schema}"`);
+
+        const pastas = readdirSync(migrationsDir)
+            .filter((nome) => /^\d+_/.test(nome))
+            .sort();
+
+        for (const pasta of pastas) {
+            const sql = readFileSync(join(migrationsDir, pasta, 'migration.sql'), 'utf8');
+            if (sql.trim()) {
+                await client.query(sql);
             }
         }
     } catch (error) {
-        banco.close();
-        rmSync(diretorio, { recursive: true, force: true });
+        await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`).catch(() => {});
+        client.release();
+        await adminPool.end();
         throw error;
     }
-    banco.close();
+    client.release();
 
-    const prisma = new PrismaClient({
-        adapter: new PrismaBetterSqlite3({ url: `file:${arquivo}` }),
+    const connectionString = montarConnectionStringComSchema(baseUrl, schema);
+    const prismaPool = new Pool({
+        connectionString,
+        options: `-c search_path=${schema}`,
     });
+
+    const adapter = new PrismaPg(prismaPool, {
+        schema,
+        disposeExternalPool: true,
+    });
+
+    const prisma = new PrismaClient({ adapter });
 
     return {
         prisma,
+        schema,
         async fechar() {
             await prisma.$disconnect();
-            rmSync(diretorio, { recursive: true, force: true });
+            try {
+                await adminPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+            } finally {
+                await adminPool.end();
+            }
         },
     };
 }

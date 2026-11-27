@@ -66,7 +66,10 @@ describe('Integração - API de usuários', () => {
 
         expect(prismaMock.usuario.create)
             .toHaveBeenCalledWith({
-                data: dadosUsuario
+                data: expect.objectContaining({
+                    ...dadosUsuario,
+                    passwordHash: expect.stringMatching(/^scrypt\$/),
+                }),
             });
     });
 });

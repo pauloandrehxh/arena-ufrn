@@ -1,6 +1,7 @@
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { createReservaService } from '../../src/services/reserva.service.js';
 import { ReservaConflictError, ReservaNotFoundError } from '../../src/lib/reserva.validation.js';
+import { USUARIO_PUBLICO_SELECT } from '../../src/lib/usuario.select.js';
 
 const prisma = {
     $transaction: jest.fn(),
@@ -27,7 +28,8 @@ describe('US03 - cancelarReserva com dependências isoladas', () => {
         expect(prisma.$transaction).toHaveBeenCalledTimes(1);
         expect(prisma.reserva.update).toHaveBeenCalledWith({
             where: { id: 1, status: 'ATIVA', date: reserva.date, startTime: '14:00' },
-            data: { status: 'CANCELADA' }, include: { usuario: true, quadra: true },
+            data: { status: 'CANCELADA' },
+            include: { usuario: { select: USUARIO_PUBLICO_SELECT }, quadra: true },
         });
         expect(prisma.reserva.delete).not.toHaveBeenCalled();
     });

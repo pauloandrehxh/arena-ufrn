@@ -12,6 +12,7 @@ import {
 import { createReservaService } from '../../src/services/reserva.service.js';
 import { createReservaController } from '../../src/controllers/reserva.controller.js';
 import { createReservaRoutes } from '../../src/routes/reserva.routes.js';
+import { USUARIO_PUBLICO_SELECT } from '../../src/lib/usuario.select.js';
 
 const prismaMock = {
     $transaction: jest.fn(),
@@ -94,7 +95,7 @@ describe('Integração - API de reservas', () => {
                 .toHaveBeenCalledWith({
                     where: { id: 1 },
                     include: {
-                        usuario: true,
+                        usuario: { select: USUARIO_PUBLICO_SELECT },
                         quadra: true,
                     },
                 });
@@ -156,6 +157,10 @@ describe('Integração - API de reservas', () => {
                     include: {
                         quadra: true,
                     },
+                    orderBy: [
+                        { date: 'desc' },
+                        { startTime: 'asc' },
+                    ],
                 });
         });
 
@@ -197,8 +202,12 @@ describe('Integração - API de reservas', () => {
                         quadraId: 1,
                     },
                     include: {
-                        usuario: true,
+                        usuario: { select: USUARIO_PUBLICO_SELECT },
                     },
+                    orderBy: [
+                        { date: 'desc' },
+                        { startTime: 'asc' },
+                    ],
                 });
         });
 
@@ -463,7 +472,7 @@ describe('Integração - API de reservas', () => {
                         id: 1, status: 'ATIVA', date: reserva.date, startTime: reserva.startTime,
                     },
                     data: { status: 'CANCELADA' },
-                    include: { usuario: true, quadra: true },
+                    include: { usuario: { select: USUARIO_PUBLICO_SELECT }, quadra: true },
                 });
             expect(prismaMock.reserva.delete).not.toHaveBeenCalled();
         });
