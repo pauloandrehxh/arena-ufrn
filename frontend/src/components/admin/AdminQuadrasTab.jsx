@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { quadrasApi } from '../../services/api';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -267,3 +268,8 @@ export function AdminQuadrasTab({ quadras, onRecarregar }) {
         </div>
     );
 }
+
+AdminQuadrasTab.propTypes = {
+    quadras: PropTypes.array.isRequired,
+    onRecarregar: PropTypes.func.isRequired,
+};

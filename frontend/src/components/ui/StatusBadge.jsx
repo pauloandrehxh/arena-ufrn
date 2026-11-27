@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 const CONFIG = {
     ATIVA: { label: 'Ativa', classes: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
     CANCELADA: { label: 'Cancelada', classes: 'bg-rose-50 text-rose-800 border-rose-200' },
@@ -24,3 +26,8 @@ export function StatusBadge({ status, label }) {
         </span>
     );
 }
+
+StatusBadge.propTypes = {
+    status: PropTypes.string,
+    label: PropTypes.string,
+};

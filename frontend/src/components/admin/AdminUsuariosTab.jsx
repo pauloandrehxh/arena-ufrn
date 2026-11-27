@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Pencil, Search, UserCheck, UserPlus, UserX } from 'lucide-react';
 import { usuariosApi } from '../../services/api';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -13,6 +14,16 @@ const FORM_INICIAL = {
     role: 'ALUNO',
     password: '',
 };
+
+function obterClasseBotaoAtivo(ehProprio, ativo) {
+    if (ehProprio) {
+        return 'opacity-40 cursor-not-allowed border-slate-200 text-slate-400';
+    }
+    if (ativo) {
+        return 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 cursor-pointer';
+    }
+    return 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 cursor-pointer';
+}
 
 export function AdminUsuariosTab({ usuarios, onRecarregar }) {
     const { usuario: gestorLogado } = useAuth();
@@ -90,9 +101,9 @@ export function AdminUsuariosTab({ usuarios, onRecarregar }) {
         try {
             await usuariosApi.atualizar(u.id, { active: !u.active });
             toast.sucesso(
-                !u.active
-                    ? `Conta de ${u.name} reativada.`
-                    : `Conta de ${u.name} inativada (histórico preservado).`
+                u.active
+                    ? `Conta de ${u.name} inativada (histórico preservado).`
+                    : `Conta de ${u.name} reativada.`
             );
             await onRecarregar();
         } catch (error) {
@@ -186,13 +197,7 @@ export function AdminUsuariosTab({ usuarios, onRecarregar }) {
                                                     disabled={ehProprio}
                                                     onClick={() => alternarAtivo(u)}
                                                     title={ehProprio ? 'Você não pode inativar sua própria conta' : undefined}
-                                                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                                                        ehProprio
-                                                            ? 'opacity-40 cursor-not-allowed border-slate-200 text-slate-400'
-                                                            : u.active
-                                                                ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 cursor-pointer'
-                                                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 cursor-pointer'
-                                                    }`}
+                                                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${obterClasseBotaoAtivo(ehProprio, u.active)}`}
                                                 >
                                                     {u.active ? (
                                                         <>
@@ -319,3 +324,8 @@ export function AdminUsuariosTab({ usuarios, onRecarregar }) {
         </div>
     );
 }
+
+AdminUsuariosTab.propTypes = {
+    usuarios: PropTypes.array.isRequired,
+    onRecarregar: PropTypes.func.isRequired,
+};
