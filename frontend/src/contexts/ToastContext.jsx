@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
@@ -6,13 +6,15 @@ const ToastContext = createContext(null);
 
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);
+    const proximoIdRef = useRef(0);
 
     const remover = useCallback((id) => {
         setToasts((lista) => lista.filter((item) => item.id !== id));
     }, []);
 
     const adicionar = useCallback((tipo, mensagem) => {
-        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        proximoIdRef.current += 1;
+        const id = `${Date.now()}-${proximoIdRef.current}`;
         setToasts((lista) => [...lista, { id, tipo, mensagem }]);
         setTimeout(() => remover(id), 4500);
     }, [remover]);
