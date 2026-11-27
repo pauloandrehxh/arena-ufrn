@@ -3,6 +3,7 @@
 **Projeto:** Arena UFRN — Gestor de Reserva de Quadras de Areia  
 **Grupo:** G3 — Paulo André Alves de Moura (`@pauloandrehxh`) e Luís Felipe Linhares Pereira (`@Luisfelipelinhares`)  
 **Issue da disciplina (`bsi-tasks`):** [#627](https://github.com/tacianosilva/bsi-tasks/issues/627)  
+**Issue do projeto (`arena-ufrn`):** [#31](https://github.com/pauloandrehxh/arena-ufrn/issues/31)  
 **Repositório:** <https://github.com/pauloandrehxh/arena-ufrn>  
 **Branch de entrega:** `infra/627-pipeline-ci-cd`
 
@@ -121,6 +122,7 @@ docker compose down
 - **Pipelines no GitHub Actions:** <https://github.com/pauloandrehxh/arena-ufrn/actions>
 - **Painel no SonarQube LABENS:** <https://labens.dct.ufrn.br/sonarqube/dashboard?id=arena-ufrn>
 - **Issue da P5 (`bsi-tasks`):** <https://github.com/tacianosilva/bsi-tasks/issues/627>
+- **Issue da P5 (`arena-ufrn`):** <https://github.com/pauloandrehxh/arena-ufrn/issues/31>
 
 ---
 
