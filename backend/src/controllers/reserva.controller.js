@@ -22,6 +22,16 @@ function responderErroOperacao(res, error, mensagem) {
     return res.status(500).json({ message: mensagem });
 }
 
+function resolverUsuarioIdCriacao(req, usuarioIdBody) {
+    if (!req.usuario) {
+        return usuarioIdBody;
+    }
+    if (req.usuario.role === 'GESTOR' && usuarioIdBody !== undefined) {
+        return usuarioIdBody;
+    }
+    return req.usuario.id;
+}
+
 export function createReservaController(reservaService) {
     async function listar(req, res) {
         try {
@@ -142,11 +152,7 @@ export function createReservaController(reservaService) {
             endTime,
         } = req.body ?? {};
 
-        const usuarioId = req.usuario
-            ? (req.usuario.role === 'GESTOR' && usuarioIdBody !== undefined
-                ? usuarioIdBody
-                : req.usuario.id)
-            : usuarioIdBody;
+        const usuarioId = resolverUsuarioIdCriacao(req, usuarioIdBody);
 
         if (
             !usuarioId ||

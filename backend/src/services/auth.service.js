@@ -59,7 +59,7 @@ export function createAuthService(prisma, jwtService) {
                 where: { registration: identificador },
             });
 
-        if (!usuario || !usuario.active) {
+        if (!usuario?.active) {
             throw new AuthUnauthorizedError('Credenciais inválidas.');
         }
 
