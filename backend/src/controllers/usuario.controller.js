@@ -2,6 +2,70 @@ import { hashSenha } from '../lib/password.js';
 
 const PAPEIS_VALIDOS = new Set(['ALUNO', 'GESTOR']);
 
+function validarCamposSimplesAtualizacao(id, body, usuarioLogadoId) {
+    const dados = {};
+
+    if (body.name !== undefined) {
+        if (typeof body.name !== 'string' || body.name.trim().length < 2) {
+            return { erro: { status: 400, message: 'Nome deve ter ao menos 2 caracteres.' } };
+        }
+        dados.name = body.name.trim();
+    }
+
+    if (body.active !== undefined) {
+        if (typeof body.active !== 'boolean') {
+            return { erro: { status: 400, message: 'O campo active deve ser booleano.' } };
+        }
+        if (usuarioLogadoId === id && body.active === false) {
+            return { erro: { status: 400, message: 'Você não pode inativar sua própria conta de gestor.' } };
+        }
+        dados.active = body.active;
+    }
+
+    if (body.role !== undefined) {
+        if (!PAPEIS_VALIDOS.has(body.role)) {
+            return { erro: { status: 400, message: 'Papel inválido. Use ALUNO ou GESTOR.' } };
+        }
+        if (usuarioLogadoId === id && body.role !== 'GESTOR') {
+            return { erro: { status: 400, message: 'Você não pode remover seu próprio papel de gestor.' } };
+        }
+        dados.role = body.role;
+    }
+
+    return { dados };
+}
+
+async function validarCamposUnicosESenha(id, body, usuarioService) {
+    const dados = {};
+
+    if (body.email !== undefined) {
+        const emailNormalizado = String(body.email).trim().toLowerCase();
+        const usuarioComEmail = await usuarioService.buscarUsuarioPorEmail(emailNormalizado);
+        if (usuarioComEmail && usuarioComEmail.id !== id) {
+            return { erro: { status: 409, message: 'E-mail já cadastrado.' } };
+        }
+        dados.email = emailNormalizado;
+    }
+
+    if (body.registration !== undefined) {
+        const matriculaNormalizada = String(body.registration).trim();
+        const usuarioComMatricula = await usuarioService.buscarUsuarioPorMatricula(matriculaNormalizada);
+        if (usuarioComMatricula && usuarioComMatricula.id !== id) {
+            return { erro: { status: 409, message: 'Matrícula já cadastrada.' } };
+        }
+        dados.registration = matriculaNormalizada;
+    }
+
+    if (body.password !== undefined) {
+        if (typeof body.password !== 'string' || body.password.length < 6) {
+            return { erro: { status: 400, message: 'A senha deve ter ao menos 6 caracteres.' } };
+        }
+        dados.passwordHash = await hashSenha(body.password);
+    }
+
+    return { dados };
+}
+
 export function createUsuarioController(usuarioService) {
     async function listar(req, res) {
         try {
@@ -92,15 +156,15 @@ export function createUsuarioController(usuarioService) {
                 registration: matriculaNormalizada,
             };
 
-            if (password !== undefined) {
+            if (password === undefined) {
+                dados.passwordHash = await hashSenha('Arena@123');
+            } else {
                 if (typeof password !== 'string' || password.length < 6) {
                     return res.status(400).json({
                         message: 'A senha deve ter ao menos 6 caracteres.',
                     });
                 }
                 dados.passwordHash = await hashSenha(password);
-            } else {
-                dados.passwordHash = await hashSenha('Arena@123');
             }
 
             if (role !== undefined) {
@@ -137,88 +201,18 @@ export function createUsuarioController(usuarioService) {
                 });
             }
 
-            const {
-                name,
-                email,
-                registration,
-                active,
-                role,
-                password,
-            } = req.body ?? {};
-
-            const dadosAtualizados = {};
-
-            if (name !== undefined) {
-                if (typeof name !== 'string' || name.trim().length < 2) {
-                    return res.status(400).json({
-                        message: 'Nome deve ter ao menos 2 caracteres.',
-                    });
-                }
-                dadosAtualizados.name = name.trim();
+            const body = req.body ?? {};
+            const simples = validarCamposSimplesAtualizacao(id, body, req.usuario?.id);
+            if (simples.erro) {
+                return res.status(simples.erro.status).json({ message: simples.erro.message });
             }
 
-            if (email !== undefined) {
-                const emailNormalizado = String(email).trim().toLowerCase();
-                const usuarioComEmail = await usuarioService.buscarUsuarioPorEmail(emailNormalizado);
-
-                if (usuarioComEmail && usuarioComEmail.id !== id) {
-                    return res.status(409).json({
-                        message: 'E-mail já cadastrado.',
-                    });
-                }
-
-                dadosAtualizados.email = emailNormalizado;
+            const unicos = await validarCamposUnicosESenha(id, body, usuarioService);
+            if (unicos.erro) {
+                return res.status(unicos.erro.status).json({ message: unicos.erro.message });
             }
 
-            if (registration !== undefined) {
-                const matriculaNormalizada = String(registration).trim();
-                const usuarioComMatricula = await usuarioService.buscarUsuarioPorMatricula(matriculaNormalizada);
-
-                if (usuarioComMatricula && usuarioComMatricula.id !== id) {
-                    return res.status(409).json({
-                        message: 'Matrícula já cadastrada.',
-                    });
-                }
-
-                dadosAtualizados.registration = matriculaNormalizada;
-            }
-
-            if (active !== undefined) {
-                if (typeof active !== 'boolean') {
-                    return res.status(400).json({
-                        message: 'O campo active deve ser booleano.',
-                    });
-                }
-                if (req.usuario?.id === id && active === false) {
-                    return res.status(400).json({
-                        message: 'Você não pode inativar sua própria conta de gestor.',
-                    });
-                }
-                dadosAtualizados.active = active;
-            }
-
-            if (role !== undefined) {
-                if (!PAPEIS_VALIDOS.has(role)) {
-                    return res.status(400).json({
-                        message: 'Papel inválido. Use ALUNO ou GESTOR.',
-                    });
-                }
-                if (req.usuario?.id === id && role !== 'GESTOR') {
-                    return res.status(400).json({
-                        message: 'Você não pode remover seu próprio papel de gestor.',
-                    });
-                }
-                dadosAtualizados.role = role;
-            }
-
-            if (password !== undefined) {
-                if (typeof password !== 'string' || password.length < 6) {
-                    return res.status(400).json({
-                        message: 'A senha deve ter ao menos 6 caracteres.',
-                    });
-                }
-                dadosAtualizados.passwordHash = await hashSenha(password);
-            }
+            const dadosAtualizados = { ...simples.dados, ...unicos.dados };
 
             if (Object.keys(dadosAtualizados).length === 0) {
                 return res.status(400).json({

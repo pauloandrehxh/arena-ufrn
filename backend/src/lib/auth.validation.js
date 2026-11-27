@@ -47,9 +47,12 @@ export function validarDadosRegistro({ name, email, registration, password }) {
 }
 
 export function validarDadosLogin({ email, identifier, password }) {
-    const identificador = typeof identifier === 'string' && identifier.trim()
-        ? identifier.trim()
-        : (typeof email === 'string' ? email.trim() : '');
+    let identificador = '';
+    if (typeof identifier === 'string' && identifier.trim()) {
+        identificador = identifier.trim();
+    } else if (typeof email === 'string') {
+        identificador = email.trim();
+    }
 
     if (!identificador || typeof password !== 'string' || password.length === 0) {
         throw new AuthValidationError('Informe e-mail ou matrícula e senha.');

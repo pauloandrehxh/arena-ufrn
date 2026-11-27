@@ -37,6 +37,24 @@ export function extrairToken(req) {
     return null;
 }
 
+export function requireRole(...papeisPermitidos) {
+    return (req, res, next) => {
+        if (!req.usuario) {
+            return res.status(401).json({
+                message: 'Autenticação necessária.',
+            });
+        }
+
+        if (!papeisPermitidos.includes(req.usuario.role)) {
+            return res.status(403).json({
+                message: 'Acesso restrito. Você não tem permissão para esta operação.',
+            });
+        }
+
+        return next();
+    };
+}
+
 export function createAuthMiddlewares(prisma, jwtService) {
     async function requireAuth(req, res, next) {
         const token = extrairToken(req);
@@ -53,7 +71,7 @@ export function createAuthMiddlewares(prisma, jwtService) {
                 where: { id: payload.id },
             });
 
-            if (!usuario || !usuario.active) {
+            if (!usuario?.active) {
                 return res.status(401).json({
                     message: 'Sessão inválida ou usuário inativo.',
                 });
@@ -66,24 +84,6 @@ export function createAuthMiddlewares(prisma, jwtService) {
                 message: 'Sessão inválida ou expirada.',
             });
         }
-    }
-
-    function requireRole(...papeisPermitidos) {
-        return (req, res, next) => {
-            if (!req.usuario) {
-                return res.status(401).json({
-                    message: 'Autenticação necessária.',
-                });
-            }
-
-            if (!papeisPermitidos.includes(req.usuario.role)) {
-                return res.status(403).json({
-                    message: 'Acesso restrito. Você não tem permissão para esta operação.',
-                });
-            }
-
-            return next();
-        };
     }
 
     return {

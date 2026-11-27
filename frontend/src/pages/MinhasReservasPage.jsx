@@ -115,10 +115,14 @@ export default function MinhasReservasPage() {
         const dataIso = typeof reserva.date === 'string'
             ? reserva.date.slice(0, 10)
             : new Date(reserva.date).toISOString().slice(0, 10);
+        let dataInicialReagendar = hojeIso;
+        if (dataIso >= hojeIso) {
+            dataInicialReagendar = dataIso;
+        }
         setCarregandoSlots(true);
         setReservaReagendar(reserva);
         setReagendarQuadraId(String(reserva.quadraId));
-        setReagendarData(dataIso >= hojeIso ? dataIso : hojeIso);
+        setReagendarData(dataInicialReagendar);
         setSlotEscolhido(null);
     };
 
@@ -134,7 +138,7 @@ export default function MinhasReservasPage() {
             });
             toast.sucesso('Reserva reagendada com sucesso!');
             setReservaReagendar(null);
-            await carregarReservas();
+            carregarReservas();
         } catch (error) {
             toast.erro(error.message || 'Não foi possível reagendar a reserva.');
         } finally {
@@ -149,7 +153,7 @@ export default function MinhasReservasPage() {
             await reservasApi.cancelar(reservaCancelar.id);
             toast.sucesso('Reserva cancelada. O horário foi liberado para outros usuários.');
             setReservaCancelar(null);
-            await carregarReservas();
+            carregarReservas();
         } catch (error) {
             toast.erro(error.message || 'Erro ao cancelar reserva.');
         } finally {
@@ -170,6 +174,147 @@ export default function MinhasReservasPage() {
     }, [reservas]);
 
     const temFiltros = Boolean(filtros.status || filtros.dateFrom || filtros.dateTo);
+
+    let conteudoReservas;
+    if (carregando) {
+        conteudoReservas = (
+            <div className="space-y-3">
+                {[1, 2, 3].map((item) => (
+                    <div key={item} className="h-24 rounded-2xl bg-slate-100 animate-pulse" />
+                ))}
+            </div>
+        );
+    } else if (erro) {
+        conteudoReservas = (
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800">
+                {erro}
+            </div>
+        );
+    } else if (reservas.length === 0) {
+        conteudoReservas = (
+            <div className="py-12 text-center">
+                <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-base font-bold text-slate-800">
+                    {temFiltros
+                        ? 'Nenhuma reserva encontrada para esses filtros.'
+                        : 'Você ainda não possui reservas.'}
+                </p>
+                <p className="text-sm text-slate-500 mt-1 mb-5">
+                    Escolha uma quadra disponível e garanta seu próximo jogo na areia.
+                </p>
+                <Link
+                    to="/#quadras"
+                    className="inline-flex items-center gap-2 bg-ufrn-800 hover:bg-ufrn-900 text-white text-sm font-semibold px-4 py-2.5 rounded-xl"
+                >
+                    <CalendarPlus className="w-4 h-4" />
+                    Explorar Quadras
+                </Link>
+            </div>
+        );
+    } else {
+        conteudoReservas = (
+            <div className="space-y-3">
+                {reservas.map((reserva) => {
+                    const podeAlterar =
+                        reserva.status === 'ATIVA' &&
+                        reservaEhFutura(reserva.date, reserva.startTime);
+
+                    return (
+                        <article
+                            key={reserva.id}
+                            className="rounded-2xl border border-sand-200 bg-sand-50/40 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        >
+                            <div className="space-y-1.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <StatusBadge status={reserva.status} />
+                                    <span className="text-xs font-medium text-slate-400">
+                                        #{reserva.id}
+                                    </span>
+                                </div>
+                                <h2 className="text-base font-bold text-slate-900">
+                                    {reserva.quadra?.name || `Quadra #${reserva.quadraId}`}
+                                </h2>
+                                <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-600 tabular-nums">
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <Calendar className="w-4 h-4 text-ufrn-700" />
+                                        {formatarDataBR(reserva.date)}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
+                                        <Clock className="w-4 h-4 text-amber-600" />
+                                        {reserva.startTime} – {reserva.endTime}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {podeAlterar ? (
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => abrirModalReagendar(reserva)}
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-ufrn-700/25 bg-white hover:bg-ufrn-50 text-ufrn-800 text-xs font-bold transition-colors cursor-pointer"
+                                    >
+                                        <CalendarClock className="w-4 h-4" />
+                                        Reagendar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReservaCancelar(reserva)}
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors cursor-pointer"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                        Cancelar
+                                    </button>
+                                </div>
+                            ) : (
+                                <span className="text-xs font-medium text-slate-400">
+                                    {reserva.status === 'CANCELADA'
+                                        ? 'Horário liberado'
+                                        : 'Período já iniciado'}
+                                </span>
+                            )}
+                        </article>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    let conteudoSlots;
+    if (carregandoSlots) {
+        conteudoSlots = (
+            <p className="text-xs text-slate-500 py-4">Consultando grade de horários...</p>
+        );
+    } else if (slotsReagendar.length === 0) {
+        conteudoSlots = (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                Nenhum horário livre para esta quadra e data. Escolha outra data.
+            </p>
+        );
+    } else {
+        conteudoSlots = (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+                {slotsReagendar.map((slot) => {
+                    const ativo =
+                        slotEscolhido?.startTime === slot.startTime &&
+                        slotEscolhido?.endTime === slot.endTime;
+                    return (
+                        <button
+                            key={slot.startTime}
+                            type="button"
+                            onClick={() => setSlotEscolhido(slot)}
+                            className={`py-2 px-3 rounded-xl border text-xs font-bold tabular-nums cursor-pointer transition-colors ${
+                                ativo
+                                    ? 'bg-ufrn-800 text-white border-ufrn-800'
+                                    : 'bg-emerald-50/70 text-emerald-950 border-emerald-200 hover:bg-ufrn-50'
+                            }`}
+                        >
+                            {slot.startTime} – {slot.endTime}
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-sand-50 flex flex-col">
@@ -302,100 +447,7 @@ export default function MinhasReservasPage() {
                         </div>
                     </div>
 
-                    {carregando ? (
-                        <div className="space-y-3">
-                            {[1, 2, 3].map((item) => (
-                                <div key={item} className="h-24 rounded-2xl bg-slate-100 animate-pulse" />
-                            ))}
-                        </div>
-                    ) : erro ? (
-                        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800">
-                            {erro}
-                        </div>
-                    ) : reservas.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                            <p className="text-base font-bold text-slate-800">
-                                {temFiltros
-                                    ? 'Nenhuma reserva encontrada para esses filtros.'
-                                    : 'Você ainda não possui reservas.'}
-                            </p>
-                            <p className="text-sm text-slate-500 mt-1 mb-5">
-                                Escolha uma quadra disponível e garanta seu próximo jogo na areia.
-                            </p>
-                            <Link
-                                to="/#quadras"
-                                className="inline-flex items-center gap-2 bg-ufrn-800 hover:bg-ufrn-900 text-white text-sm font-semibold px-4 py-2.5 rounded-xl"
-                            >
-                                <CalendarPlus className="w-4 h-4" />
-                                Explorar Quadras
-                            </Link>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {reservas.map((reserva) => {
-                                const podeAlterar =
-                                    reserva.status === 'ATIVA' &&
-                                    reservaEhFutura(reserva.date, reserva.startTime);
-
-                                return (
-                                    <article
-                                        key={reserva.id}
-                                        className="rounded-2xl border border-sand-200 bg-sand-50/40 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                                    >
-                                        <div className="space-y-1.5">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <StatusBadge status={reserva.status} />
-                                                <span className="text-xs font-medium text-slate-400">
-                                                    #{reserva.id}
-                                                </span>
-                                            </div>
-                                            <h2 className="text-base font-bold text-slate-900">
-                                                {reserva.quadra?.name || `Quadra #${reserva.quadraId}`}
-                                            </h2>
-                                            <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-slate-600 tabular-nums">
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    <Calendar className="w-4 h-4 text-ufrn-700" />
-                                                    {formatarDataBR(reserva.date)}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
-                                                    <Clock className="w-4 h-4 text-amber-600" />
-                                                    {reserva.startTime} – {reserva.endTime}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {podeAlterar ? (
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => abrirModalReagendar(reserva)}
-                                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-ufrn-700/25 bg-white hover:bg-ufrn-50 text-ufrn-800 text-xs font-bold transition-colors cursor-pointer"
-                                                >
-                                                    <CalendarClock className="w-4 h-4" />
-                                                    Reagendar
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setReservaCancelar(reserva)}
-                                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors cursor-pointer"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                    Cancelar
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs font-medium text-slate-400">
-                                                {reserva.status === 'CANCELADA'
-                                                    ? 'Horário liberado'
-                                                    : 'Período já iniciado'}
-                                            </span>
-                                        )}
-                                    </article>
-                                );
-                            })}
-                        </div>
-                    )}
+                    {conteudoReservas}
                 </section>
             </main>
 
@@ -487,35 +539,7 @@ export default function MinhasReservasPage() {
                             <p className="text-xs font-bold text-slate-700 mb-2">
                                 Horários livres disponíveis
                             </p>
-                            {carregandoSlots ? (
-                                <p className="text-xs text-slate-500 py-4">Consultando grade de horários...</p>
-                            ) : slotsReagendar.length === 0 ? (
-                                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                                    Nenhum horário livre para esta quadra e data. Escolha outra data.
-                                </p>
-                            ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
-                                    {slotsReagendar.map((slot) => {
-                                        const ativo =
-                                            slotEscolhido?.startTime === slot.startTime &&
-                                            slotEscolhido?.endTime === slot.endTime;
-                                        return (
-                                            <button
-                                                key={slot.startTime}
-                                                type="button"
-                                                onClick={() => setSlotEscolhido(slot)}
-                                                className={`py-2 px-3 rounded-xl border text-xs font-bold tabular-nums cursor-pointer transition-colors ${
-                                                    ativo
-                                                        ? 'bg-ufrn-800 text-white border-ufrn-800'
-                                                        : 'bg-emerald-50/70 text-emerald-950 border-emerald-200 hover:bg-ufrn-50'
-                                                }`}
-                                            >
-                                                {slot.startTime} – {slot.endTime}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                            {conteudoSlots}
                         </div>
 
                         <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">

@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
@@ -13,16 +14,14 @@ export function ToastProvider({ children }) {
     const adicionar = useCallback((tipo, mensagem) => {
         const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         setToasts((lista) => [...lista, { id, tipo, mensagem }]);
-        setTimeout(() => {
-            setToasts((lista) => lista.filter((item) => item.id !== id));
-        }, 4500);
-    }, []);
+        setTimeout(() => remover(id), 4500);
+    }, [remover]);
 
-    const api = {
+    const api = useMemo(() => ({
         sucesso: (mensagem) => adicionar('sucesso', mensagem),
         erro: (mensagem) => adicionar('erro', mensagem),
         info: (mensagem) => adicionar('info', mensagem),
-    };
+    }), [adicionar]);
 
     return (
         <ToastContext.Provider value={api}>
@@ -45,9 +44,8 @@ export function ToastProvider({ children }) {
                     }[toast.tipo];
 
                     return (
-                        <div
+                        <output
                             key={toast.id}
-                            role="status"
                             className={`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg text-sm font-medium ${estilos}`}
                         >
                             <Icone className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
@@ -60,13 +58,17 @@ export function ToastProvider({ children }) {
                             >
                                 <X className="w-4 h-4" />
                             </button>
-                        </div>
+                        </output>
                     );
                 })}
             </div>
         </ToastContext.Provider>
     );
 }
+
+ToastProvider.propTypes = {
+    children: PropTypes.node,
+};
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Calendar, Clock, Filter, RefreshCw, XCircle } from 'lucide-react';
 import { reservasApi } from '../../services/api';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -65,6 +66,84 @@ export function AdminAgendaTab({ quadras, onAtualizarKpis }) {
 
     const temFiltros = Boolean(filtros.quadraId || filtros.status || filtros.dateFrom || filtros.dateTo);
 
+    let conteudoAgenda;
+    if (carregando) {
+        conteudoAgenda = (
+            <div className="p-8 text-center text-sm text-slate-500">Carregando agenda...</div>
+        );
+    } else if (reservas.length === 0) {
+        conteudoAgenda = (
+            <div className="p-10 text-center">
+                <Filter className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-slate-700">
+                    Nenhuma reserva encontrada para os filtros selecionados.
+                </p>
+            </div>
+        );
+    } else {
+        conteudoAgenda = (
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr className="bg-sand-50 border-b border-sand-200 text-xs uppercase tracking-wider text-slate-500">
+                            <th className="py-3.5 px-4 font-bold">Quadra</th>
+                            <th className="py-3.5 px-4 font-bold">Titular</th>
+                            <th className="py-3.5 px-4 font-bold">Data &amp; Horário</th>
+                            <th className="py-3.5 px-4 font-bold">Status</th>
+                            <th className="py-3.5 px-4 font-bold text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {reservas.map((r) => {
+                            const cancelavel = r.status === 'ATIVA' && reservaEhFutura(r.date, r.startTime);
+                            return (
+                                <tr key={r.id} className="hover:bg-sand-50/50">
+                                    <td className="py-3.5 px-4">
+                                        <p className="font-bold text-slate-900">{r.quadra?.name}</p>
+                                        <p className="text-xs text-slate-400">Reserva #{r.id}</p>
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                        <p className="font-semibold text-slate-800">{r.usuario?.name}</p>
+                                        <p className="text-xs text-slate-500">
+                                            {r.usuario?.registration} • {r.usuario?.email}
+                                        </p>
+                                    </td>
+                                    <td className="py-3.5 px-4 tabular-nums">
+                                        <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
+                                            <Calendar className="w-3.5 h-3.5 text-ufrn-700" />
+                                            {formatarDataBR(r.date)}
+                                        </span>
+                                        <span className="block text-xs text-slate-600 mt-0.5 inline-flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            {r.startTime} – {r.endTime}
+                                        </span>
+                                    </td>
+                                    <td className="py-3.5 px-4">
+                                        <StatusBadge status={r.status} />
+                                    </td>
+                                    <td className="py-3.5 px-4 text-right">
+                                        {cancelavel ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setReservaCancelar(r)}
+                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer"
+                                            >
+                                                <XCircle className="w-3.5 h-3.5" />
+                                                Cancelar
+                                            </button>
+                                        ) : (
+                                            <span className="text-xs text-slate-400">—</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-5">
             <div className="bg-white rounded-2xl border border-sand-200 p-5 flex flex-wrap items-end justify-between gap-4">
@@ -82,7 +161,7 @@ export function AdminAgendaTab({ quadras, onAtualizarKpis }) {
                             <option value="">Todas as quadras</option>
                             {quadras.map((q) => (
                                 <option key={q.id} value={q.id}>
-                                    {q.name} {!q.active ? '(Manutenção)' : ''}
+                                    {q.name} {q.active ? '' : '(Manutenção)'}
                                 </option>
                             ))}
                         </select>
@@ -154,76 +233,7 @@ export function AdminAgendaTab({ quadras, onAtualizarKpis }) {
             </div>
 
             <div className="bg-white rounded-2xl border border-sand-200 overflow-hidden">
-                {carregando ? (
-                    <div className="p-8 text-center text-sm text-slate-500">Carregando agenda...</div>
-                ) : reservas.length === 0 ? (
-                    <div className="p-10 text-center">
-                        <Filter className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                        <p className="text-sm font-semibold text-slate-700">
-                            Nenhuma reserva encontrada para os filtros selecionados.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr className="bg-sand-50 border-b border-sand-200 text-xs uppercase tracking-wider text-slate-500">
-                                    <th className="py-3.5 px-4 font-bold">Quadra</th>
-                                    <th className="py-3.5 px-4 font-bold">Titular</th>
-                                    <th className="py-3.5 px-4 font-bold">Data &amp; Horário</th>
-                                    <th className="py-3.5 px-4 font-bold">Status</th>
-                                    <th className="py-3.5 px-4 font-bold text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {reservas.map((r) => {
-                                    const cancelavel = r.status === 'ATIVA' && reservaEhFutura(r.date, r.startTime);
-                                    return (
-                                        <tr key={r.id} className="hover:bg-sand-50/50">
-                                            <td className="py-3.5 px-4">
-                                                <p className="font-bold text-slate-900">{r.quadra?.name}</p>
-                                                <p className="text-xs text-slate-400">Reserva #{r.id}</p>
-                                            </td>
-                                            <td className="py-3.5 px-4">
-                                                <p className="font-semibold text-slate-800">{r.usuario?.name}</p>
-                                                <p className="text-xs text-slate-500">
-                                                    {r.usuario?.registration} • {r.usuario?.email}
-                                                </p>
-                                            </td>
-                                            <td className="py-3.5 px-4 tabular-nums">
-                                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800">
-                                                    <Calendar className="w-3.5 h-3.5 text-ufrn-700" />
-                                                    {formatarDataBR(r.date)}
-                                                </span>
-                                                <span className="block text-xs text-slate-600 mt-0.5 inline-flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" />
-                                                    {r.startTime} – {r.endTime}
-                                                </span>
-                                            </td>
-                                            <td className="py-3.5 px-4">
-                                                <StatusBadge status={r.status} />
-                                            </td>
-                                            <td className="py-3.5 px-4 text-right">
-                                                {cancelavel ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setReservaCancelar(r)}
-                                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer"
-                                                    >
-                                                        <XCircle className="w-3.5 h-3.5" />
-                                                        Cancelar
-                                                    </button>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400">—</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                {conteudoAgenda}
             </div>
 
             <Modal
@@ -264,3 +274,8 @@ export function AdminAgendaTab({ quadras, onAtualizarKpis }) {
         </div>
     );
 }
+
+AdminAgendaTab.propTypes = {
+    quadras: PropTypes.array.isRequired,
+    onAtualizarKpis: PropTypes.func,
+};

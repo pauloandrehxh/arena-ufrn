@@ -19,6 +19,12 @@ export function obterAgoraFortaleza() {
     };
 }
 
+function obterRotuloDia(indice, diaUtc, nomesDia) {
+    if (indice === 0) return 'Hoje';
+    if (indice === 1) return 'Amanhã';
+    return nomesDia[diaUtc];
+}
+
 export function gerarProximosDias(quantidade = 14) {
     const { date: hojeStr } = obterAgoraFortaleza();
     const [ano, mes, dia] = hojeStr.split('-').map(Number);
@@ -31,7 +37,7 @@ export function gerarProximosDias(quantidade = 14) {
         const iso = d.toISOString().slice(0, 10);
         dias.push({
             iso,
-            diaSemana: i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : nomesDia[d.getUTCDay()],
+            diaSemana: obterRotuloDia(i, d.getUTCDay(), nomesDia),
             diaMes: String(d.getUTCDate()).padStart(2, '0'),
             mesCurto: nomesMes[d.getUTCMonth()],
         });
