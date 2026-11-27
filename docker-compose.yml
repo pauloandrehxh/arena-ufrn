@@ -4,18 +4,44 @@ services:
     container_name: arena-ufrn-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: arena
-      POSTGRES_PASSWORD: arena_dev_password
-      POSTGRES_DB: arena_ufrn
+      POSTGRES_USER: ${POSTGRES_USER:-arena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arena_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-arena_ufrn}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - arena_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U arena -d arena_ufrn"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arena} -d ${POSTGRES_DB:-arena_ufrn}"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arena-ufrn-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 10000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-arena}:${POSTGRES_PASSWORD:-arena_dev_password}@postgres:5432/${POSTGRES_DB:-arena_ufrn}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-arena-ufrn-local-compose-secret-change-in-production-2026}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      SERVE_STATIC: "true"
+      PUBLIC_DIR: /app/public
+    ports:
+      - "${APP_PORT:-3000}:10000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:10000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
 
 volumes:
   arena_pgdata:
