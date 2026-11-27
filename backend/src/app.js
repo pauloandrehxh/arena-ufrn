@@ -55,12 +55,27 @@ export function createApp(prisma, { agora, jwtSecret } = {}) {
         });
     });
 
-    app.get('/health', (req, res) => {
-        res.status(200).json({
-            status: 'ok',
-            service: 'arena-ufrn',
-            timestamp: new Date().toISOString(),
-        });
+    app.get('/health', async (req, res) => {
+        const timestamp = new Date().toISOString();
+        try {
+            if (typeof prisma?.$queryRaw === 'function') {
+                await prisma.$queryRaw`SELECT 1`;
+            }
+
+            return res.status(200).json({
+                status: 'ok',
+                service: 'arena-ufrn',
+                database: 'up',
+                timestamp,
+            });
+        } catch {
+            return res.status(503).json({
+                status: 'error',
+                service: 'arena-ufrn',
+                database: 'down',
+                timestamp,
+            });
+        }
     });
 
     // Autenticação e Autorização
