@@ -31,6 +31,20 @@ function responderErroAuth(res, error, mensagemPadrao) {
     return res.status(500).json({ message: mensagemPadrao });
 }
 
+async function logout(req, res) {
+    res.clearCookie(AUTH_COOKIE_NAME, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+    });
+    return res.status(204).send();
+}
+
+async function me(req, res) {
+    return res.status(200).json({ user: req.usuario });
+}
+
 export function createAuthController(authService) {
     async function registrar(req, res) {
         try {
@@ -50,20 +64,6 @@ export function createAuthController(authService) {
         } catch (error) {
             return responderErroAuth(res, error, 'Erro ao autenticar usuário.');
         }
-    }
-
-    async function logout(req, res) {
-        res.clearCookie(AUTH_COOKIE_NAME, {
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-        });
-        return res.status(204).send();
-    }
-
-    async function me(req, res) {
-        return res.status(200).json({ user: req.usuario });
     }
 
     return {

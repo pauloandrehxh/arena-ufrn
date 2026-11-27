@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Link, Navigate, useLocation } from 'react-router';
 import { ShieldAlert, ArrowLeft, CalendarCheck2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -71,3 +72,8 @@ export function ProtectedRoute({ children, allowedRoles }) {
 
     return children;
 }
+
+ProtectedRoute.propTypes = {
+    children: PropTypes.node,
+    allowedRoles: PropTypes.arrayOf(PropTypes.string),
+};

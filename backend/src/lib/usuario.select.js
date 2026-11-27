@@ -14,6 +14,7 @@ export function sanitizarUsuario(usuario) {
         return null;
     }
 
-    const { passwordHash: _passwordHash, ...dadosPublicos } = usuario;
+    const dadosPublicos = { ...usuario };
+    delete dadosPublicos.passwordHash;
     return dadosPublicos;
 }

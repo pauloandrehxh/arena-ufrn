@@ -270,7 +270,7 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
                 ...data,
             };
 
-            const quadraAlvo = data.quadraId !== undefined ? data.quadraId : reservaAtual.quadraId;
+            const quadraAlvo = data.quadraId ?? reservaAtual.quadraId;
             if (data.quadraId !== undefined) {
                 validarIdReserva(data.quadraId, 'quadraId');
             }

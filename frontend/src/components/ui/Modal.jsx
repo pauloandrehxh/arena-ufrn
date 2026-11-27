@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { X } from 'lucide-react';
 
 export function Modal({ aberto, onFechar, titulo, descricao, children, largura = 'max-w-lg' }) {
@@ -9,23 +10,27 @@ export function Modal({ aberto, onFechar, titulo, descricao, children, largura =
                 onFechar();
             }
         };
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
+        globalThis.addEventListener('keydown', onKeyDown);
+        return () => globalThis.removeEventListener('keydown', onKeyDown);
     }, [aberto, onFechar]);
 
     if (!aberto) return null;
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
-            role="dialog"
+        <dialog
+            open
             aria-modal="true"
             aria-labelledby="modal-titulo"
-            onClick={onFechar}
+            className="fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none bg-transparent p-4 flex items-center justify-center border-0"
         >
+            <button
+                type="button"
+                aria-label="Fechar janela"
+                onClick={onFechar}
+                className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs border-0 p-0 cursor-default"
+            />
             <div
-                className={`bg-white rounded-2xl border border-slate-200 shadow-2xl w-full ${largura} max-h-[90vh] overflow-y-auto`}
-                onClick={(event) => event.stopPropagation()}
+                className={`relative z-10 bg-white rounded-2xl border border-slate-200 shadow-2xl w-full ${largura} max-h-[90vh] overflow-y-auto`}
             >
                 <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100">
                     <div>
@@ -47,6 +52,15 @@ export function Modal({ aberto, onFechar, titulo, descricao, children, largura =
                 </div>
                 <div className="p-6">{children}</div>
             </div>
-        </div>
+        </dialog>
     );
 }
+
+Modal.propTypes = {
+    aberto: PropTypes.bool,
+    onFechar: PropTypes.func,
+    titulo: PropTypes.node,
+    descricao: PropTypes.node,
+    children: PropTypes.node,
+    largura: PropTypes.string,
+};
