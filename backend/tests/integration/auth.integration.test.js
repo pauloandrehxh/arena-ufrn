@@ -233,4 +233,24 @@ describe('US05/US06/US07/US08/US12 - Autenticação e Controle de Acesso no Post
         expect(cancelAdm.status).toBe(200);
         expect(cancelAdm.body.status).toBe('CANCELADA');
     });
+
+    test('retorna 400 para dados inválidos e 409 para conflitos no registro e login', async () => {
+        const regInvalido = await request(app).post('/api/auth/register').send({
+            name: 'A',
+            email: 'invalido',
+            registration: '1',
+            password: '123',
+        });
+        expect(regInvalido.status).toBe(400);
+
+        await registrarAluno();
+        const regDuplicado = await registrarAluno();
+        expect(regDuplicado.status).toBe(409);
+
+        const loginInvalido = await request(app).post('/api/auth/login').send({
+            email: '',
+            password: '',
+        });
+        expect(loginInvalido.status).toBe(400);
+    });
 });
