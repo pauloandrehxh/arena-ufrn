@@ -1,7 +1,15 @@
 import { Router } from 'express';
 
-export function createUsuarioRoutes(usuarioController) {
+const passthrough = (req, res, next) => next();
+
+export function createUsuarioRoutes(usuarioController, authMiddlewares = null) {
     const router = Router();
+    const requireAuth = authMiddlewares?.requireAuth ?? passthrough;
+    const requireGestor = authMiddlewares?.requireRole
+        ? authMiddlewares.requireRole('GESTOR')
+        : passthrough;
+
+    router.use(requireAuth, requireGestor);
 
     router.get('/', usuarioController.listar);
 

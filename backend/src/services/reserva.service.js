@@ -2,15 +2,18 @@ import {
     ReservaValidationError,
     ReservaNotFoundError,
     ReservaConflictError,
+    ReservaForbiddenError,
     inicioReservaNoFuturo,
     normalizarDataReserva,
     validarIdReserva,
     validarHorariosReserva,
     validarDataFuturaReserva,
 } from '../lib/reserva.validation.js';
+import { USUARIO_PUBLICO_SELECT } from '../lib/usuario.select.js';
 
 const STATUS_ATIVA = 'ATIVA';
 const STATUS_CANCELADA = 'CANCELADA';
+const STATUS_VALIDOS = new Set(['ATIVA', 'CANCELADA', 'CONCLUIDA']);
 const ERRO_REGISTRO_NAO_ENCONTRADO = 'P2025';
 
 const CAMPOS_PERMITIDOS = new Set([
@@ -22,9 +25,48 @@ const CAMPOS_PERMITIDOS = new Set([
 ]);
 
 const INCLUDE_RESERVA = {
-    usuario: true,
+    usuario: { select: USUARIO_PUBLICO_SELECT },
     quadra: true,
 };
+
+async function travarQuadraNaTransacao(banco, quadraId) {
+    if (typeof banco.$executeRaw === 'function') {
+        await banco.$executeRaw`SELECT pg_advisory_xact_lock(${Number(quadraId)})`;
+    }
+}
+
+function construirFiltroReservas(filtros = {}) {
+    const where = {};
+
+    if (filtros.usuarioId !== undefined) {
+        where.usuarioId = filtros.usuarioId;
+    }
+
+    if (filtros.quadraId !== undefined && filtros.quadraId !== '') {
+        const quadraId = Number(filtros.quadraId);
+        validarIdReserva(quadraId, 'quadraId');
+        where.quadraId = quadraId;
+    }
+
+    if (filtros.status !== undefined && filtros.status !== '') {
+        if (!STATUS_VALIDOS.has(filtros.status)) {
+            throw new ReservaValidationError('Status de filtro inválido. Use ATIVA, CANCELADA ou CONCLUIDA.');
+        }
+        where.status = filtros.status;
+    }
+
+    if (filtros.dateFrom || filtros.dateTo) {
+        where.date = {};
+        if (filtros.dateFrom) {
+            where.date.gte = normalizarDataReserva(filtros.dateFrom);
+        }
+        if (filtros.dateTo) {
+            where.date.lte = normalizarDataReserva(filtros.dateTo);
+        }
+    }
+
+    return where;
+}
 
 async function validarUsuario(usuarioId, banco) {
     const usuario = await banco.usuario.findUnique({
@@ -89,6 +131,13 @@ function verificarErroPrisma(error, mensagem) {
     throw error;
 }
 
+function validarPermissaoReserva(reserva, ator) {
+    if (!ator) return;
+    if (ator.role !== 'GESTOR' && reserva.usuarioId !== ator.id) {
+        throw new ReservaForbiddenError();
+    }
+}
+
 function validarReservaAtiva(reserva, agora) {
     if (!reserva) {
         throw new ReservaNotFoundError();
@@ -109,9 +158,17 @@ function validarReservaAtiva(reserva, agora) {
 
 export function createReservaService(prisma, { agora = () => new Date() } = {}) {
 
-    async function listarReservas() {
+    async function listarReservas(filtros = {}) {
+        const where = construirFiltroReservas(filtros);
+        const temFiltros = Object.keys(where).length > 0;
+
         return prisma.reserva.findMany({
+            ...(temFiltros ? { where } : {}),
             include: INCLUDE_RESERVA,
+            orderBy: [
+                { date: 'desc' },
+                { startTime: 'asc' },
+            ],
         });
     }
 
@@ -122,12 +179,18 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
         });
     }
 
-    async function buscarReservasPorUsuario(usuarioId) {
+    async function buscarReservasPorUsuario(usuarioId, filtros = {}) {
+        const where = construirFiltroReservas({ ...filtros, usuarioId });
+
         return prisma.reserva.findMany({
-            where: { usuarioId },
+            where,
             include: {
                 quadra: true,
             },
+            orderBy: [
+                { date: 'desc' },
+                { startTime: 'asc' },
+            ],
         });
     }
 
@@ -135,8 +198,12 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
         return prisma.reserva.findMany({
             where: { quadraId },
             include: {
-                usuario: true,
+                usuario: { select: USUARIO_PUBLICO_SELECT },
             },
+            orderBy: [
+                { date: 'desc' },
+                { startTime: 'asc' },
+            ],
         });
     }
 
@@ -159,6 +226,7 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
         };
 
         return prisma.$transaction(async (banco) => {
+            await travarQuadraNaTransacao(banco, dados.quadraId);
             await validarUsuario(dados.usuarioId, banco);
             await validarQuadra(dados.quadraId, banco);
             await verificarConflito(dados, banco);
@@ -170,7 +238,7 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
         });
     }
 
-    async function atualizarReserva(id, data) {
+    async function atualizarReserva(id, data, ator = null) {
         validarIdReserva(id, 'ID da reserva');
 
         const campos = Object.keys(data);
@@ -181,65 +249,86 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
             );
         }
 
-        const reservaAtual = await prisma.reserva.findUnique({
-            where: { id },
-        });
+        if (ator && ator.role !== 'GESTOR' && data.usuarioId !== undefined && data.usuarioId !== ator.id) {
+            throw new ReservaForbiddenError('Não é permitido transferir a reserva para outro usuário.');
+        }
 
-        validarReservaAtiva(reservaAtual, agora);
+        const executar = async (banco) => {
+            const reservaAtual = await banco.reserva.findUnique({
+                where: { id },
+            });
 
-        const dadosAtualizados = {
-            ...reservaAtual,
-            ...data,
+            if (!reservaAtual) {
+                throw new ReservaNotFoundError();
+            }
+
+            validarPermissaoReserva(reservaAtual, ator);
+            validarReservaAtiva(reservaAtual, agora);
+
+            const dadosAtualizados = {
+                ...reservaAtual,
+                ...data,
+            };
+
+            const quadraAlvo = data.quadraId !== undefined ? data.quadraId : reservaAtual.quadraId;
+            if (data.quadraId !== undefined) {
+                validarIdReserva(data.quadraId, 'quadraId');
+            }
+            await travarQuadraNaTransacao(banco, quadraAlvo);
+
+            if (data.usuarioId !== undefined) {
+                validarIdReserva(data.usuarioId, 'usuarioId');
+                await validarUsuario(data.usuarioId, banco);
+            }
+
+            if (data.quadraId !== undefined) {
+                await validarQuadra(data.quadraId, banco);
+            }
+
+            dadosAtualizados.date = normalizarDataReserva(
+                dadosAtualizados.date
+            );
+
+            validarHorariosReserva(
+                dadosAtualizados.startTime,
+                dadosAtualizados.endTime
+            );
+
+            validarDataFuturaReserva(
+                dadosAtualizados.date,
+                dadosAtualizados.startTime,
+                agora()
+            );
+
+            await verificarConflito(dadosAtualizados, banco, id);
+
+            try {
+                return await banco.reserva.update({
+                    where: {
+                        id,
+                        status: STATUS_ATIVA,
+                    },
+                    data: {
+                        ...data,
+                        date: dadosAtualizados.date,
+                    },
+                    include: INCLUDE_RESERVA,
+                });
+            } catch (error) {
+                verificarErroPrisma(
+                    error,
+                    'A reserva foi alterada durante a atualização.'
+                );
+            }
         };
 
-        if (data.usuarioId !== undefined) {
-            validarIdReserva(data.usuarioId, 'usuarioId');
-            await validarUsuario(data.usuarioId, prisma);
+        if (typeof prisma.$transaction === 'function') {
+            return prisma.$transaction(executar);
         }
-
-        if (data.quadraId !== undefined) {
-            validarIdReserva(data.quadraId, 'quadraId');
-            await validarQuadra(data.quadraId, prisma);
-        }
-
-        dadosAtualizados.date = normalizarDataReserva(
-            dadosAtualizados.date
-        );
-
-        validarHorariosReserva(
-            dadosAtualizados.startTime,
-            dadosAtualizados.endTime
-        );
-
-        validarDataFuturaReserva(
-            dadosAtualizados.date,
-            dadosAtualizados.startTime,
-            agora()
-        );
-
-        await verificarConflito(dadosAtualizados, prisma, id);
-
-        try {
-            return await prisma.reserva.update({
-                where: {
-                    id,
-                    status: STATUS_ATIVA,
-                },
-                data: {
-                    ...data,
-                    date: dadosAtualizados.date,
-                },
-                include: INCLUDE_RESERVA,
-            });
-        } catch (error) {
-            verificarErroPrisma(
-                error,
-                'A reserva foi alterada durante a atualização.'
-            );
-        }
+        return executar(prisma);
     }
 
-    async function cancelarReserva(id) {
+    async function cancelarReserva(id, ator = null) {
         validarIdReserva(id, 'ID da reserva');
 
         return prisma.$transaction(async (banco) => {
@@ -251,6 +340,8 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
             if (!reserva) {
                 throw new ReservaNotFoundError();
             }
+
+            validarPermissaoReserva(reserva, ator);
 
             if (reserva.status === STATUS_CANCELADA) {
                 return reserva;
@@ -266,6 +357,17 @@ export function createReservaService(prisma, { agora = () => new Date() } = {}) 
                 throw new ReservaConflictError(
                     'Não é possível cancelar uma reserva já iniciada.'
                 );
+            }
+
+            if (typeof banco.$executeRaw === 'function') {
+                await travarQuadraNaTransacao(banco, reserva.quadraId);
+                const reservaAtualizada = await banco.reserva.findUnique({
+                    where: { id },
+                    include: INCLUDE_RESERVA,
+                });
+                if (reservaAtualizada?.status === STATUS_CANCELADA) {
+                    return reservaAtualizada;
+                }
             }
 
             try {

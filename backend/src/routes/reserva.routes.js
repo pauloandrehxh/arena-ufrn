@@ -1,23 +1,31 @@
 import { Router } from 'express';
 
-export function createReservaRoutes(reservaController) {
+const passthrough = (req, res, next) => next();
+
+export function createReservaRoutes(reservaController, authMiddlewares = null) {
     const router = Router();
+    const requireAuth = authMiddlewares?.requireAuth ?? passthrough;
+    const requireGestor = authMiddlewares?.requireRole
+        ? authMiddlewares.requireRole('GESTOR')
+        : passthrough;
 
-    router.get('/', reservaController.listar);
+    router.get('/minhas', requireAuth, reservaController.listarMinhas);
 
-    router.get('/:id', reservaController.buscarPorId);
+    router.get('/usuario/:usuarioId', requireAuth, reservaController.listarPorUsuario);
 
-    router.get('/usuario/:usuarioId', reservaController.listarPorUsuario);
+    router.get('/quadra/:quadraId', requireAuth, requireGestor, reservaController.listarPorQuadra);
 
-    router.get('/quadra/:quadraId', reservaController.listarPorQuadra);
+    router.get('/', requireAuth, requireGestor, reservaController.listar);
 
-    router.post('/', reservaController.criar);
+    router.get('/:id', requireAuth, reservaController.buscarPorId);
 
-    router.put('/:id', reservaController.atualizar);
+    router.post('/', requireAuth, reservaController.criar);
 
-    router.patch('/:id/cancelamento', reservaController.cancelar);
+    router.put('/:id', requireAuth, reservaController.atualizar);
 
-    router.delete('/:id', reservaController.deletar);
+    router.patch('/:id/cancelamento', requireAuth, reservaController.cancelar);
+
+    router.delete('/:id', requireAuth, reservaController.deletar);
 
     return router;
 }
